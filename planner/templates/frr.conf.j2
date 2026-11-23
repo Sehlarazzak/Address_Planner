@@ -1,0 +1,30 @@
+! Generated from the addressing plan. Do not edit by hand; regenerate instead.
+frr defaults traditional
+hostname {{ router.name }}
+log stdout
+service integrated-vtysh-config
+!
+{% for i in router.interfaces %}
+interface {{ i.name }}
+ description {{ i.subnet_id }} ({{ i.kind }})
+ ip address {{ i.ipv4_cidr }}
+ ipv6 address {{ i.ipv6_cidr }}
+ ip ospf area 0
+ ipv6 ospf6 area 0.0.0.0
+{% if i.kind == "lan" %}
+ ip ospf passive
+ ipv6 ospf6 passive
+{% else %}
+ ip ospf network point-to-point
+ ipv6 ospf6 network point-to-point
+{% endif %}
+!
+{% endfor %}
+router ospf
+ ospf router-id {{ router.router_id }}
+!
+router ospf6
+ ospf6 router-id {{ router.router_id }}
+!
+line vty
+!
