@@ -1,0 +1,67 @@
+{
+  "organization": "Medium (6 LANs, 3 routers)",
+  "ipv4_block": "10.20.0.0/21",
+  "ipv6_prefix": "2001:db8:1000::/48",
+  "sites": [
+    {
+      "name": "HQ",
+      "router": "R1",
+      "subnets": [
+        {
+          "name": "Servers",
+          "hosts": 200,
+          "growth_pct": 20
+        },
+        {
+          "name": "Staff",
+          "hosts": 60,
+          "growth_pct": 20
+        }
+      ]
+    },
+    {
+      "name": "Branch1",
+      "router": "R2",
+      "subnets": [
+        {
+          "name": "Staff",
+          "hosts": 90,
+          "growth_pct": 20
+        },
+        {
+          "name": "Guest",
+          "hosts": 28,
+          "growth_pct": 20
+        }
+      ]
+    },
+    {
+      "name": "Branch2",
+      "router": "R3",
+      "subnets": [
+        {
+          "name": "Staff",
+          "hosts": 40,
+          "growth_pct": 20
+        },
+        {
+          "name": "Lab",
+          "hosts": 12,
+          "growth_pct": 20
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "name": "HQ-Branch1",
+      "a": "HQ",
+      "b": "Branch1"
+    },
+    {
+      "name": "HQ-Branch2",
+      "a": "HQ",
+      "b": "Branch2"
+    }
+  ]
+}

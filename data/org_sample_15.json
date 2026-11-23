@@ -1,0 +1,108 @@
+{
+  "organization": "Brief sample (4 sites, 15 subnets)",
+  "ipv4_block": "10.10.0.0/20",
+  "ipv6_prefix": "2001:db8:1000::/48",
+  "sites": [
+    {
+      "name": "HQ",
+      "router": "R1",
+      "subnets": [
+        {
+          "name": "Servers",
+          "hosts": 100,
+          "growth_pct": 20
+        },
+        {
+          "name": "Staff",
+          "hosts": 60,
+          "growth_pct": 20
+        },
+        {
+          "name": "WiFi",
+          "hosts": 120,
+          "growth_pct": 20
+        },
+        {
+          "name": "Mgmt",
+          "hosts": 12,
+          "growth_pct": 20
+        }
+      ]
+    },
+    {
+      "name": "Site2",
+      "router": "R2",
+      "subnets": [
+        {
+          "name": "Staff",
+          "hosts": 50,
+          "growth_pct": 20
+        },
+        {
+          "name": "Guest",
+          "hosts": 30,
+          "growth_pct": 20
+        },
+        {
+          "name": "IoT",
+          "hosts": 10,
+          "growth_pct": 20
+        }
+      ]
+    },
+    {
+      "name": "Site3",
+      "router": "R3",
+      "subnets": [
+        {
+          "name": "Staff",
+          "hosts": 45,
+          "growth_pct": 20
+        },
+        {
+          "name": "Guest",
+          "hosts": 25,
+          "growth_pct": 20
+        },
+        {
+          "name": "Lab",
+          "hosts": 20,
+          "growth_pct": 20
+        }
+      ]
+    },
+    {
+      "name": "Site4",
+      "router": "R4",
+      "subnets": [
+        {
+          "name": "Staff",
+          "hosts": 28,
+          "growth_pct": 20
+        },
+        {
+          "name": "Guest",
+          "hosts": 10,
+          "growth_pct": 20
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "name": "HQ-Site2",
+      "a": "HQ",
+      "b": "Site2"
+    },
+    {
+      "name": "HQ-Site3",
+      "a": "HQ",
+      "b": "Site3"
+    },
+    {
+      "name": "HQ-Site4",
+      "a": "HQ",
+      "b": "Site4"
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "organization": "Large (10 LANs, 4 routers)",
+  "ipv4_block": "10.30.0.0/19",
+  "ipv6_prefix": "2001:db8:1000::/48",
+  "sites": [
+    {
+      "name": "HQ",
+      "router": "R1",
+      "subnets": [
+        {
+          "name": "Servers",
+          "hosts": 250,
+          "growth_pct": 20
+        },
+        {
+          "name": "Staff",
+          "hosts": 120,
+          "growth_pct": 20
+        },
+        {
+          "name": "Mgmt",
+          "hosts": 40,
+          "growth_pct": 20
+        }
+      ]
+    },
+    {
+      "name": "Branch1",
+      "router": "R2",
+      "subnets": [
+        {
+          "name": "Staff",
+          "hosts": 100,
+          "growth_pct": 20
+        },
+        {
+          "name": "Guest",
+          "hosts": 60,
+          "growth_pct": 30
+        }
+      ]
+    },
+    {
+      "name": "Branch2",
+      "router": "R3",
+      "subnets": [
+        {
+          "name": "Staff",
+          "hosts": 80,
+          "growth_pct": 20
+        },
+        {
+          "name": "Guest",
+          "hosts": 30,
+          "growth_pct": 30
+        },
+        {
+          "name": "IoT",
+          "hosts": 14,
+          "growth_pct": 20
+        }
+      ]
+    },
+    {
+      "name": "Branch3",
+      "router": "R4",
+      "subnets": [
+        {
+          "name": "Staff",
+          "hosts": 50,
+          "growth_pct": 20
+        },
+        {
+          "name": "Lab",
+          "hosts": 20,
+          "growth_pct": 20
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "name": "HQ-Branch1",
+      "a": "HQ",
+      "b": "Branch1"
+    },
+    {
+      "name": "HQ-Branch2",
+      "a": "HQ",
+      "b": "Branch2"
+    },
+    {
+      "name": "HQ-Branch3",
+      "a": "HQ",
+      "b": "Branch3"
+    }
+  ]
+}

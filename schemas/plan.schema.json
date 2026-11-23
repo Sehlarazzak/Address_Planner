@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Addressing plan (output of the allocator, input of the config generator)",
+  "type": "object",
+  "required": ["organization", "ipv4_block", "ipv6_prefix", "ipv6_sites", "ipv6_link_block", "subnets", "routers"],
+  "additionalProperties": false,
+  "properties": {
+    "organization": { "type": "string", "minLength": 1 },
+    "ipv4_block": { "type": "string", "pattern": "^[0-9]{1,3}(\\.[0-9]{1,3}){3}/[0-9]{1,2}$" },
+    "ipv6_prefix": { "type": "string", "pattern": "^[0-9a-fA-F:]+/48$" },
+    "ipv6_sites": { "type": "object" },
+    "ipv6_link_block": { "type": "string", "pattern": "^[0-9a-fA-F:]+/52$" },
+    "subnets": { "type": "array", "minItems": 3, "items": { "$ref": "#/$defs/subnet" } },
+    "routers": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/router" } },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allocation_time_ms": { "type": "number", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "subnet": {
+      "type": "object",
+      "required": ["id", "site", "name", "type", "hosts_requested", "growth_pct", "hosts_required",
+                   "ipv4_cidr", "ipv4_prefixlen", "ipv4_usable", "ipv6_cidr"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "site": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "enum": ["lan", "link"] },
+        "hosts_requested": { "type": "integer", "minimum": 1 },
+        "growth_pct": { "type": "integer", "minimum": 0 },
+        "hosts_required": { "type": "integer", "minimum": 1 },
+        "ipv4_cidr": { "type": "string", "pattern": "^[0-9]{1,3}(\\.[0-9]{1,3}){3}/[0-9]{1,2}$" },
+        "ipv4_prefixlen": { "type": "integer", "minimum": 8, "maximum": 30 },
+        "ipv4_usable": { "type": "integer", "minimum": 2 },
+        "ipv6_cidr": { "type": "string", "pattern": "^[0-9a-fA-F:]+/64$" }
+      }
+    },
+    "router": {
+      "type": "object",
+      "required": ["name", "site", "interfaces"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "site": { "type": "string", "minLength": 1 },
+        "interfaces": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/iface" } }
+      }
+    },
+    "iface": {
+      "type": "object",
+      "required": ["name", "subnet_id", "ipv4", "ipv6"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "subnet_id": { "type": "string", "minLength": 1 },
+        "ipv4": { "type": "string", "pattern": "^[0-9]{1,3}(\\.[0-9]{1,3}){3}$" },
+        "ipv6": { "type": "string", "pattern": "^[0-9a-fA-F:]+$" }
+      }
+    }
+  }
+}

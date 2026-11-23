@@ -1,0 +1,41 @@
+{
+  "organization": "Small (3 LANs, 2 routers)",
+  "ipv4_block": "10.10.0.0/23",
+  "ipv6_prefix": "2001:db8:1000::/48",
+  "sites": [
+    {
+      "name": "A",
+      "router": "R1",
+      "subnets": [
+        {
+          "name": "LAN1",
+          "hosts": 100,
+          "growth_pct": 20
+        },
+        {
+          "name": "LAN2",
+          "hosts": 50,
+          "growth_pct": 20
+        }
+      ]
+    },
+    {
+      "name": "B",
+      "router": "R2",
+      "subnets": [
+        {
+          "name": "LAN3",
+          "hosts": 25,
+          "growth_pct": 20
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "name": "A-B",
+      "a": "A",
+      "b": "B"
+    }
+  ]
+}
