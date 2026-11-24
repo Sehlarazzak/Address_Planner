@@ -62,15 +62,25 @@ class TestPlanStructure(unittest.TestCase):
             validate_structure(bad, "plan")
 
     # ---- TODO (you write these; each is 3-5 lines) ------------------------------------
+   
+
     def test_todo_ipv4_prefixlen_above_30_is_rejected(self):
-        self.skipTest("TODO: set a subnet's ipv4_prefixlen to 31 and expect ValueError")
+        bad = clone(plan())
+        bad["subnets"][0]["ipv4_prefixlen"] = 31
+        with self.assertRaises(ValueError):
+            validate_structure(bad, "plan")
 
     def test_todo_ipv6_cidr_that_is_not_a_slash_64_is_rejected(self):
-        self.skipTest("TODO: use a /63 as ipv6_cidr and expect ValueError")
+        bad = clone(plan())
+        bad["subnets"][0]["ipv6_cidr"] = "2001:db8:1000:1000::/63"
+        with self.assertRaises(ValueError):
+            validate_structure(bad, "plan")
 
     def test_todo_plan_with_one_router_is_rejected(self):
-        self.skipTest("TODO: drop a router (baseline needs >= 2) and expect ValueError")
-
+        bad = clone(plan())
+        bad["routers"] = bad["routers"][:1]
+        with self.assertRaises(ValueError):
+            validate_structure(bad, "plan")
 
 if __name__ == "__main__":
     unittest.main()

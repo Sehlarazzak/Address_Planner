@@ -58,11 +58,21 @@ class TestRequiredPrefix(unittest.TestCase):
         with self.assertRaises(ValueError):
             required_prefix(2 ** 24 - 1)
 
-    # ---- TODO (you write this) ------------------------------------------------------
-    def test_todo_every_sample_lan_gets_a_prefix_that_fits(self):
-        self.skipTest("TODO: for every LAN in every data/org_*.json, compute required_prefix("
-                      "required_hosts(...)) and assert usable hosts >= hosts_required")
 
+
+    def test_todo_every_sample_lan_gets_a_prefix_that_fits(self):
+        from pathlib import Path
+        from planner.validate import load_json
+
+        data_dir = Path(__file__).resolve().parent.parent / "data"
+        for org_file in sorted(data_dir.glob("org_*.json")):
+            org = load_json(org_file)
+            for site in org["sites"]:
+                for lan in site["subnets"]:
+                    need = required_hosts(lan["hosts"], lan["growth_pct"])
+                    prefix = required_prefix(need)
+                    usable = (2 ** (32 - prefix)) - 2
+                    self.assertGreaterEqual(usable, need)
 
 if __name__ == "__main__":
     unittest.main()

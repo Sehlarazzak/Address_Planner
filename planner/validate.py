@@ -255,13 +255,56 @@ def _check_plan_ipv6(data, subnets):
 
 
 def _check_plan_ipv4(data, subnets):
-    """Tania's half (TODO). Rules to enforce:
-      1. Every ipv4_cidr is a strict IPv4 network inside ipv4_block.
-      2. No two IPv4 subnets overlap.
-      3. ipv4_prefixlen matches the ipv4_cidr, and ipv4_usable >= hosts_required.
-      4. Every interface IPv4 address lies inside its subnet and is not the network or
-         broadcast address.
-      5. No IPv4 address is used twice anywhere in the plan.
-    `subnets` is a dict mapping subnet id -> subnet dictionary, built for you.
-    """
-    raise NotImplementedError("TODO (Tania): implement _check_plan_ipv4")
+    """Validate IPv4 subnets, overlaps, host capacity, and interfaces."""
+    try:
+        block = ipaddress.IPv4Network(data["ipv4_block"], strict=True)
+    except ValueError as exc:
+        raise ValueError(f"Invalid ipv4_block in plan: {exc}") from exc
+
+    nets = {}
+    for sid, sub in subnets.items():
+        try:
+            net = ipaddress.IPv4Network(sub["ipv4_cidr"], strict=True)
+        except ValueError as exc:
+            raise ValueError(f"Subnet {sid!r} has invalid ipv4_cidr {sub['ipv4_cidr']!r}: {exc}") from exc
+        if not net.subnet_of(block):
+            raise ValueError(f"Subnet {sid!r}: {net} is outside the block {block}")
+        if net.prefixlen != sub["ipv4_prefixlen"]:
+            raise ValueError(
+                f"Subnet {sid!r}: ipv4_prefixlen {sub['ipv4_prefixlen']} does not match {net}"
+            )
+        real_usable = net.num_addresses - 2
+        if sub["ipv4_usable"] != real_usable:
+            raise ValueError(
+                f"Subnet {sid!r}: ipv4_usable is {sub['ipv4_usable']} but {net} has {real_usable}"
+            )
+        if sub["ipv4_usable"] < sub["hosts_required"]:
+            raise ValueError(
+                f"Subnet {sid!r}: {net} has {sub['ipv4_usable']} usable addresses, "
+                f"but {sub['hosts_required']} are required"
+            )
+        nets[sid] = net
+
+    ordered = sorted(nets.items(), key=lambda kv: (int(kv[1].network_address), kv[1].prefixlen))
+    for (id_a, a), (id_b, b) in zip(ordered, ordered[1:]):
+        if a.overlaps(b):
+            raise ValueError(f"IPv4 overlap between {id_a!r} ({a}) and {id_b!r} ({b})")
+
+    used = set()
+    for router in data["routers"]:
+        for iface in router["interfaces"]:
+            where = f"{router['name']}:{iface['name']}"
+            try:
+                addr = ipaddress.IPv4Address(iface["ipv4"])
+            except ValueError as exc:
+                raise ValueError(f"{where} has bad IPv4 address {iface['ipv4']!r}: {exc}") from exc
+            net = nets[iface["subnet_id"]]
+            if addr not in net:
+                raise ValueError(f"{where} address {addr} is outside its subnet {net}")
+            if addr == net.network_address:
+                raise ValueError(f"{where} address {addr} is the network address of {net}")
+            if addr == net.broadcast_address:
+                raise ValueError(f"{where} address {addr} is the broadcast address of {net}")
+            if addr in used:
+                raise ValueError(f"Duplicate IPv4 address {addr} (already used elsewhere)")
+            used.add(addr)
