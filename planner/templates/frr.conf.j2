@@ -4,6 +4,9 @@ hostname {{ router.name }}
 log stdout
 service integrated-vtysh-config
 !
+ip forwarding
+ipv6 forwarding
+!
 {% for i in router.interfaces %}
 interface {{ i.name }}
  description {{ i.subnet_id }} ({{ i.kind }})

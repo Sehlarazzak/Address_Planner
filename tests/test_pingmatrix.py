@@ -65,6 +65,16 @@ class TestRun(unittest.TestCase):
         self.assertTrue(all(not r["passed"] for r in results if r["family"] == "ipv6"))
         self.assertTrue(all(r["passed"] for r in results if r["family"] == "ipv4"))
 
+    def test_failed_ping_keeps_the_reason(self):
+        def runner(cmd, **kwargs):
+            return SimpleNamespace(returncode=2, stdout="", stderr="ping: connect: Network is unreachable\n")
+        results = run_ping_matrix(plan(), "lab1", runner=runner)
+        self.assertTrue(all(r["detail"] == "ping: connect: Network is unreachable" for r in results))
+
+    def test_passed_ping_has_no_detail(self):
+        results = run_ping_matrix(plan(), "lab1", runner=fake_runner())
+        self.assertTrue(all(r["detail"] == "" for r in results))
+
     def test_pass_rate_of_nothing_is_zero(self):
         self.assertEqual(pass_rate([]), 0.0)
 
@@ -77,6 +87,7 @@ class TestRun(unittest.TestCase):
                 rows = list(csv.DictReader(f))
         self.assertEqual(len(rows), 12)
         self.assertEqual(rows[0]["passed"], "True")
+        self.assertIn("detail", rows[0])
 
 
 if __name__ == "__main__":

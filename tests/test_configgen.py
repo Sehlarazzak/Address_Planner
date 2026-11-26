@@ -88,7 +88,7 @@ class TestRender(unittest.TestCase):
             self.assertTrue((self.out / "configs" / router / "frr.conf").is_file())
             self.assertTrue((self.out / "configs" / router / "daemons").is_file())
         self.assertTrue((self.out / "topology.clab.yml").is_file())
-        self.assertEqual(len(self.written), 5)
+        self.assertEqual(len(self.written), 7)       # 2 routers x 3 files + topology
 
     def test_frr_conf_has_the_plan_addresses(self):
         text = (self.out / "configs" / "R1" / "frr.conf").read_text()
@@ -105,6 +105,22 @@ class TestRender(unittest.TestCase):
         self.assertNotIn("point-to-point", stanzas["eth1"])
         self.assertIn("ip ospf network point-to-point", stanzas["eth3"])
         self.assertNotIn("passive", stanzas["eth3"])
+
+    def test_frr_conf_turns_forwarding_on_for_both_families(self):
+        # The first deployment showed zebra defaulting to "no ipv6 forwarding", which blocked all routing.
+        text = (self.out / "configs" / "R1" / "frr.conf").read_text()
+        self.assertIn("\nip forwarding\n", text)
+        self.assertIn("\nipv6 forwarding\n", text)
+
+    def test_vtysh_conf_exists_and_is_mounted(self):
+        self.assertTrue((self.out / "configs" / "R1" / "vtysh.conf").is_file())
+        data = yaml.safe_load((self.out / "topology.clab.yml").read_text())
+        self.assertIn("configs/R1/vtysh.conf:/etc/frr/vtysh.conf", data["topology"]["nodes"]["R1"]["binds"])
+
+    def test_hosts_are_configured_by_labsetup_not_by_containerlab_exec(self):
+        data = yaml.safe_load((self.out / "topology.clab.yml").read_text())
+        for name in ("H-A-LAN1", "H-A-LAN2", "H-B-LAN3"):
+            self.assertNotIn("exec", data["topology"]["nodes"][name])
 
     def test_daemons_enable_ospf_for_both_families(self):
         text = (self.out / "configs" / "R1" / "daemons").read_text()

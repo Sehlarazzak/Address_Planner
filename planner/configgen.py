@@ -99,7 +99,7 @@ def default_lab_name(plan):
 
 
 def render_all(plan, out_dir, lab_name=None, frr_image=DEFAULT_FRR_IMAGE, host_image=DEFAULT_HOST_IMAGE):
-    """Write configs/<router>/frr.conf, configs/<router>/daemons and topology.clab.yml.
+    """Write configs/<router>/{frr.conf, daemons, vtysh.conf} and topology.clab.yml.
 
     Returns the list of written paths."""
     out = Path(out_dir)
@@ -111,7 +111,8 @@ def render_all(plan, out_dir, lab_name=None, frr_image=DEFAULT_FRR_IMAGE, host_i
     for router in model["routers"]:
         folder = out / "configs" / router["name"]
         folder.mkdir(parents=True, exist_ok=True)
-        for template, filename in (("frr.conf.j2", "frr.conf"), ("daemons.j2", "daemons")):
+        for template, filename in (("frr.conf.j2", "frr.conf"), ("daemons.j2", "daemons"),
+                                   ("vtysh.conf.j2", "vtysh.conf")):
             path = folder / filename
             path.write_text(env.get_template(template).render(router=router), encoding="utf-8")
             written.append(path)

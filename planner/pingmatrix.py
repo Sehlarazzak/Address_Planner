@@ -26,6 +26,14 @@ def ping_command(entry, lab_name, count=2):
             "ping", flag, "-c", str(count), "-W", "2", "-n", entry["target"]]
 
 
+def output_detail(done):
+    """One short line explaining a failed command: the last line of its error output, else of its output."""
+    err = [l.strip() for l in (getattr(done, "stderr", "") or "").splitlines() if l.strip()]
+    out = [l.strip() for l in (getattr(done, "stdout", "") or "").splitlines() if l.strip()]
+    lines = err or out
+    return lines[-1][:200] if lines else ""
+
+
 def run_ping_matrix(plan, lab_name=None, runner=subprocess.run, count=2):
     """Run every test; return a list of entries with a "passed" True/False added.
 
@@ -34,7 +42,8 @@ def run_ping_matrix(plan, lab_name=None, runner=subprocess.run, count=2):
     results = []
     for entry in build_ping_matrix(plan):
         done = runner(ping_command(entry, lab_name, count), capture_output=True, text=True)
-        results.append({**entry, "passed": done.returncode == 0})
+        passed = done.returncode == 0
+        results.append({**entry, "passed": passed, "detail": "" if passed else output_detail(done)})
     return results
 
 
@@ -47,6 +56,6 @@ def pass_rate(results):
 
 def write_csv(results, path):
     with open(path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["src", "dst", "family", "target", "passed"])
+        writer = csv.DictWriter(f, fieldnames=["src", "dst", "family", "target", "passed", "detail"])
         writer.writeheader()
         writer.writerows(results)
