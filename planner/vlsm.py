@@ -6,12 +6,18 @@ next prefix size and waste half a block. Find out why for yourself before the vi
 """
 
 
+
+
 def required_hosts(hosts, growth_pct):
     """Hosts needed after growth, rounded UP to a whole number: ceil(hosts * (100+growth)/100).
 
     Raise ValueError if hosts < 1 or growth_pct < 0.
     """
-    raise NotImplementedError("TODO: implement required_hosts")
+    if hosts < 1:
+        raise ValueError(f"hosts must be at least 1, got {hosts}")
+    if growth_pct < 0:
+        raise ValueError(f"growth_pct cannot be negative, got {growth_pct}")
+    return (hosts * (100 + growth_pct) + 99) // 100
 
 
 def required_prefix(hosts_needed):
@@ -20,4 +26,11 @@ def required_prefix(hosts_needed):
 
     Raise ValueError if hosts_needed < 1 or more than 2**24 - 2.
     """
-    raise NotImplementedError("TODO: implement required_prefix")
+    if hosts_needed < 1:
+        raise ValueError(f"hosts_needed must be at least 1, got {hosts_needed}")
+    if hosts_needed > 2 ** 24 - 2:
+        raise ValueError(
+            f"hosts_needed {hosts_needed} does not fit in any IPv4 subnet we allow (max {2 ** 24 - 2})"
+        )
+    host_bits = max(2, (hosts_needed + 1).bit_length())
+    return 32 - host_bits

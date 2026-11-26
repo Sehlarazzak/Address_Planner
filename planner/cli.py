@@ -14,14 +14,12 @@ from planner.validate import (load_json, validate_input_semantics, validate_plan
                               validate_structure)
 
 
+
+
 def _load_valid_plan(path):
     plan = load_json(path)
     validate_structure(plan, "plan")
-    try:
-        validate_plan_semantics(plan)
-    except NotImplementedError as exc:
-        # Tania's IPv4 checks are not written yet; keep working but say so.
-        print(f"warning: plan semantic checks incomplete ({exc})", file=sys.stderr)
+    validate_plan_semantics(plan)
     return plan
 
 

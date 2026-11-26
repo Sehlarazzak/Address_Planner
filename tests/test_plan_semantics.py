@@ -136,13 +136,122 @@ class TestPlanSemantics(unittest.TestCase):
             validate_plan_semantics(bad)
 
     # ---- TODO (you write these) ------------------------------------------------------
-    def test_todo_ipv4_subnet_equal_to_the_whole_block_overlapping_others(self):
-        self.skipTest("TODO: make one subnet the entire ipv4_block and expect an overlap error")
+
 
     def test_todo_adjacent_subnets_are_NOT_an_overlap(self):
-        self.skipTest("TODO: confirm 10.10.0.0/25 and 10.10.0.128/26 (touching, not overlapping) "
-                      "pass. This guards against an off-by-one in your overlap logic")
+        import ipaddress
 
+        p = plan()
+        site_name = next(iter(p["ipv6_sites"]))
+        site_52 = ipaddress.IPv6Network(p["ipv6_sites"][site_name], strict=True)
+        sixties = list(site_52.subnets(new_prefix=64))
+        net6_1, net6_2 = sixties[0], sixties[1]
+
+        p["ipv4_block"] = "10.10.0.0/24"
+        p["subnets"] = [
+            {
+                "id": "s1",
+                "site": site_name,
+                "name": "lan1",
+                "type": "lan",
+                "hosts_requested": 100,
+                "growth_pct": 0,
+                "hosts_required": 100,
+                "ipv4_cidr": "10.10.0.0/25",
+                "ipv4_prefixlen": 25,
+                "ipv4_usable": 126,
+                "ipv6_cidr": str(net6_1),
+            },
+            {
+                "id": "s2",
+                "site": site_name,
+                "name": "lan2",
+                "type": "lan",
+                "hosts_requested": 50,
+                "growth_pct": 0,
+                "hosts_required": 50,
+                "ipv4_cidr": "10.10.0.128/26",
+                "ipv4_prefixlen": 26,
+                "ipv4_usable": 62,
+                "ipv6_cidr": str(net6_2),
+            },
+        ]
+        p["routers"] = [
+            {
+                "name": "r1",
+                "site": site_name,
+                "interfaces": [
+                    {
+                        "name": "eth1",
+                        "subnet_id": "s1",
+                        "ipv4": "10.10.0.1",
+                        "ipv6": str(net6_1[1]),
+                    },
+                    {
+                        "name": "eth2",
+                        "subnet_id": "s2",
+                        "ipv4": "10.10.0.129",
+                        "ipv6": str(net6_2[1]),
+                    },
+                ],
+            }
+        ]
+        validate_plan_semantics(p)
+
+    
+    def test_todo_ipv4_subnet_equal_to_the_whole_block_overlapping_others(self):
+        bad = plan()
+        bad["ipv4_block"] = "10.10.0.0/24"
+        bad["subnets"] = [
+            {
+                "id": "whole",
+                "site": "hq",
+                "name": "all",
+                "type": "lan",
+                "hosts_requested": 100,
+                "growth_pct": 0,
+                "hosts_required": 100,
+                "ipv4_cidr": "10.10.0.0/24",
+                "ipv4_prefixlen": 24,
+                "ipv4_usable": 254,
+                "ipv6_cidr": "2001:db8:1000:1000::/64",
+            },
+            {
+                "id": "sub",
+                "site": "hq",
+                "name": "part",
+                "type": "lan",
+                "hosts_requested": 10,
+                "growth_pct": 0,
+                "hosts_required": 10,
+                "ipv4_cidr": "10.10.0.0/28",
+                "ipv4_prefixlen": 28,
+                "ipv4_usable": 14,
+                "ipv6_cidr": "2001:db8:1000:1001::/64",
+            },
+        ]
+        bad["routers"] = [
+            {
+                "name": "r1",
+                "site": "hq",
+                "interfaces": [
+                    {
+                        "name": "eth1",
+                        "subnet_id": "whole",
+                        "ipv4": "10.10.0.1",
+                        "ipv6": "2001:db8:1000:1000::1",
+                    },
+                    {
+                        "name": "eth2",
+                        "subnet_id": "sub",
+                        "ipv4": "10.10.0.2",
+                        "ipv6": "2001:db8:1000:1001::1",
+                    },
+                ],
+            }
+        ]
+        with self.assertRaises(ValueError):
+            validate_plan_semantics(bad)
 
 if __name__ == "__main__":
     unittest.main()
