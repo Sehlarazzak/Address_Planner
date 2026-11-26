@@ -1,0 +1,111 @@
+{
+  "organization": "Small (3 LANs, 2 routers)",
+  "ipv4_block": "10.10.0.0/23",
+  "ipv6_prefix": "2001:db8:1000::/48",
+  "ipv6_sites": {
+    "A": "2001:db8:1000:1000::/52",
+    "B": "2001:db8:1000:2000::/52"
+  },
+  "ipv6_link_block": "2001:db8:1000:f000::/52",
+  "subnets": [
+    {
+      "id": "A:LAN1",
+      "site": "A",
+      "name": "LAN1",
+      "type": "lan",
+      "hosts_requested": 100,
+      "growth_pct": 20,
+      "hosts_required": 120,
+      "ipv4_cidr": "10.10.0.0/25",
+      "ipv4_prefixlen": 25,
+      "ipv4_usable": 126,
+      "ipv6_cidr": "2001:db8:1000:1000::/64"
+    },
+    {
+      "id": "A:LAN2",
+      "site": "A",
+      "name": "LAN2",
+      "type": "lan",
+      "hosts_requested": 50,
+      "growth_pct": 20,
+      "hosts_required": 60,
+      "ipv4_cidr": "10.10.0.128/26",
+      "ipv4_prefixlen": 26,
+      "ipv4_usable": 62,
+      "ipv6_cidr": "2001:db8:1000:1001::/64"
+    },
+    {
+      "id": "B:LAN3",
+      "site": "B",
+      "name": "LAN3",
+      "type": "lan",
+      "hosts_requested": 25,
+      "growth_pct": 20,
+      "hosts_required": 30,
+      "ipv4_cidr": "10.10.0.192/27",
+      "ipv4_prefixlen": 27,
+      "ipv4_usable": 30,
+      "ipv6_cidr": "2001:db8:1000:2000::/64"
+    },
+    {
+      "id": "link:1:A-B",
+      "site": "A",
+      "name": "A-B",
+      "type": "link",
+      "hosts_requested": 2,
+      "growth_pct": 0,
+      "hosts_required": 2,
+      "ipv4_cidr": "10.10.0.224/30",
+      "ipv4_prefixlen": 30,
+      "ipv4_usable": 2,
+      "ipv6_cidr": "2001:db8:1000:f000::/64"
+    }
+  ],
+  "routers": [
+    {
+      "name": "r-A",
+      "site": "A",
+      "interfaces": [
+        {
+          "name": "eth1",
+          "subnet_id": "A:LAN1",
+          "ipv4": "10.10.0.1",
+          "ipv6": "2001:db8:1000:1000::1"
+        },
+        {
+          "name": "eth2",
+          "subnet_id": "A:LAN2",
+          "ipv4": "10.10.0.129",
+          "ipv6": "2001:db8:1000:1001::1"
+        },
+        {
+          "name": "eth3",
+          "subnet_id": "link:1:A-B",
+          "ipv4": "10.10.0.225",
+          "ipv6": "2001:db8:1000:f000::1"
+        }
+      ]
+    },
+    {
+      "name": "r-B",
+      "site": "B",
+      "interfaces": [
+        {
+          "name": "eth1",
+          "subnet_id": "B:LAN3",
+          "ipv4": "10.10.0.193",
+          "ipv6": "2001:db8:1000:2000::1"
+        },
+        {
+          "name": "eth2",
+          "subnet_id": "link:1:A-B",
+          "ipv4": "10.10.0.226",
+          "ipv6": "2001:db8:1000:f000::2"
+        }
+      ]
+    }
+  ],
+  "metrics": {
+    "allocation_time_ms": 0.509
+  }
+}

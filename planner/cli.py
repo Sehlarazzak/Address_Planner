@@ -5,12 +5,13 @@
     python -m planner.cli render     --plan  data/plan_example_mini.json --out build
     python -m planner.cli configure  --plan  data/plan_example_mini.json        (after containerlab deploy)
     python -m planner.cli pingmatrix --plan  data/plan_example_mini.json [--dry-run] [--csv results.csv]
+    python -m planner.cli evidence   --plan  data/plan_example_mini.json --out evidence/mini
 """
 import argparse
 import json
 import sys
 
-from planner import configgen, labsetup, pingmatrix
+from planner import configgen, evidence, labsetup, pingmatrix
 from planner.validate import (load_json, validate_input_semantics, validate_plan_semantics,
                               validate_structure)
 
@@ -67,6 +68,18 @@ def cmd_configure(args):
     print(f"OK: ran {total} setup commands on the test hosts")
 
 
+def cmd_evidence(args):
+    plan = _load_valid_plan(args.plan)
+    lab = args.lab_name or configgen.default_lab_name(plan)
+    results = evidence.collect_evidence(plan, args.out, lab)
+    for r in results:
+        print(f"{'saved' if r['ok'] else 'FAIL '}  {args.out}/{r['file']}" + ("" if r["ok"] else f"  ({r['detail']})"))
+    failed = [r for r in results if not r["ok"]]
+    if failed:
+        sys.exit(f"error: {len(failed)} of {len(results)} evidence commands failed (is the lab running?)")
+    print(f"OK: saved {len(results)} files and plan.json in {args.out}")
+
+
 def cmd_pingmatrix(args):
     plan = _load_valid_plan(args.plan)
     lab = args.lab_name or configgen.default_lab_name(plan)
@@ -109,6 +122,12 @@ def main(argv=None):
     p.add_argument("--plan", required=True)
     p.add_argument("--lab-name")
     p.set_defaults(func=cmd_configure)
+
+    p = sub.add_parser("evidence", help="save routing tables, OSPF neighbours and traceroutes from the running lab")
+    p.add_argument("--plan", required=True)
+    p.add_argument("--out", required=True)
+    p.add_argument("--lab-name")
+    p.set_defaults(func=cmd_evidence)
 
     p = sub.add_parser("pingmatrix", help="run the all-pairs ping test on the deployed lab")
     p.add_argument("--plan", required=True)
