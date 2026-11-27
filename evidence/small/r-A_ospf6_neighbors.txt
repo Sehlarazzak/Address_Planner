@@ -1,2 +1,2 @@
 Neighbor ID     Pri    DeadTime    State/IfState         Duration I/F[State]
-192.0.2.2         1    00:00:30     Full/PointToPoint    00:00:59 eth3[PointToPoint]
+192.0.2.2         1    00:00:32     Full/PointToPoint    00:00:58 eth3[PointToPoint]

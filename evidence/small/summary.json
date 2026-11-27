@@ -9,8 +9,8 @@
   "pass_rate": 100.0,
   "attempts": 1,
   "wait_seconds": 60,
-  "ping_seconds": 3.1,
-  "allocation_time_ms": 0.266,
+  "ping_seconds": 3.2,
+  "allocation_time_ms": 0.364,
   "evidence_files": 10,
   "evidence_failures": []
 }

@@ -5,22 +5,22 @@ Codes: K - kernel route, C - connected, L - local, S - static,
        > - selected route, * - FIB route, q - queued, r - rejected, b - backup
        t - trapped, o - offload failure
 
-K>* 0.0.0.0/0 [0/0] via 172.20.20.1, eth0, weight 1, 00:01:24
-O   10.20.0.0/24 [110/10] is directly connected, eth1, weight 1, 00:01:23
-C>* 10.20.0.0/24 is directly connected, eth1, weight 1, 00:01:23
-L>* 10.20.0.1/32 is directly connected, eth1, weight 1, 00:01:23
-O   10.20.1.0/25 [110/10] is directly connected, eth2, weight 1, 00:01:23
-C>* 10.20.1.0/25 is directly connected, eth2, weight 1, 00:01:23
-L>* 10.20.1.1/32 is directly connected, eth2, weight 1, 00:01:23
-O>* 10.20.1.128/25 [110/20] via 10.20.2.162, eth3, weight 1, 00:01:08
-O>* 10.20.2.0/26 [110/20] via 10.20.2.162, eth3, weight 1, 00:01:08
-O>* 10.20.2.64/26 [110/20] via 10.20.2.166, eth4, weight 1, 00:01:18
-O>* 10.20.2.128/27 [110/20] via 10.20.2.166, eth4, weight 1, 00:01:18
-O   10.20.2.160/30 [110/10] is directly connected, eth3, weight 1, 00:01:23
-C>* 10.20.2.160/30 is directly connected, eth3, weight 1, 00:01:23
-L>* 10.20.2.161/32 is directly connected, eth3, weight 1, 00:01:23
-O   10.20.2.164/30 [110/10] is directly connected, eth4, weight 1, 00:01:23
-C>* 10.20.2.164/30 is directly connected, eth4, weight 1, 00:01:23
-L>* 10.20.2.165/32 is directly connected, eth4, weight 1, 00:01:23
-C>* 172.20.20.0/24 is directly connected, eth0, weight 1, 00:01:24
-L>* 172.20.20.6/32 is directly connected, eth0, weight 1, 00:01:24
+K>* 0.0.0.0/0 [0/0] via 172.20.20.1, eth0, weight 1, 00:01:23
+O   10.20.0.0/24 [110/10] is directly connected, eth1, weight 1, 00:01:22
+C>* 10.20.0.0/24 is directly connected, eth1, weight 1, 00:01:22
+L>* 10.20.0.1/32 is directly connected, eth1, weight 1, 00:01:22
+O   10.20.1.0/25 [110/10] is directly connected, eth2, weight 1, 00:01:22
+C>* 10.20.1.0/25 is directly connected, eth2, weight 1, 00:01:22
+L>* 10.20.1.1/32 is directly connected, eth2, weight 1, 00:01:22
+O>* 10.20.1.128/25 [110/20] via 10.20.2.162, eth3, weight 1, 00:01:07
+O>* 10.20.2.0/26 [110/20] via 10.20.2.162, eth3, weight 1, 00:01:07
+O>* 10.20.2.64/26 [110/20] via 10.20.2.166, eth4, weight 1, 00:01:07
+O>* 10.20.2.128/27 [110/20] via 10.20.2.166, eth4, weight 1, 00:01:07
+O   10.20.2.160/30 [110/10] is directly connected, eth3, weight 1, 00:01:22
+C>* 10.20.2.160/30 is directly connected, eth3, weight 1, 00:01:22
+L>* 10.20.2.161/32 is directly connected, eth3, weight 1, 00:01:22
+O   10.20.2.164/30 [110/10] is directly connected, eth4, weight 1, 00:01:22
+C>* 10.20.2.164/30 is directly connected, eth4, weight 1, 00:01:22
+L>* 10.20.2.165/32 is directly connected, eth4, weight 1, 00:01:22
+C>* 172.20.20.0/24 is directly connected, eth0, weight 1, 00:01:23
+L>* 172.20.20.8/32 is directly connected, eth0, weight 1, 00:01:23

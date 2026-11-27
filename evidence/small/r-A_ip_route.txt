@@ -5,16 +5,16 @@ Codes: K - kernel route, C - connected, L - local, S - static,
        > - selected route, * - FIB route, q - queued, r - rejected, b - backup
        t - trapped, o - offload failure
 
-K>* 0.0.0.0/0 [0/0] via 172.20.20.1, eth0, weight 1, 00:01:10
-O   10.10.0.0/25 [110/10] is directly connected, eth1, weight 1, 00:01:10
-C>* 10.10.0.0/25 is directly connected, eth1, weight 1, 00:01:10
-L>* 10.10.0.1/32 is directly connected, eth1, weight 1, 00:01:10
-O   10.10.0.128/26 [110/10] is directly connected, eth2, weight 1, 00:01:10
-C>* 10.10.0.128/26 is directly connected, eth2, weight 1, 00:01:10
-L>* 10.10.0.129/32 is directly connected, eth2, weight 1, 00:01:10
-O>* 10.10.0.192/27 [110/20] via 10.10.0.226, eth3, weight 1, 00:00:55
-O   10.10.0.224/30 [110/10] is directly connected, eth3, weight 1, 00:01:10
-C>* 10.10.0.224/30 is directly connected, eth3, weight 1, 00:01:10
-L>* 10.10.0.225/32 is directly connected, eth3, weight 1, 00:01:10
-C>* 172.20.20.0/24 is directly connected, eth0, weight 1, 00:01:10
-L>* 172.20.20.5/32 is directly connected, eth0, weight 1, 00:01:10
+K>* 0.0.0.0/0 [0/0] via 172.20.20.1, eth0, weight 1, 00:01:08
+O   10.10.0.0/25 [110/10] is directly connected, eth1, weight 1, 00:01:08
+C>* 10.10.0.0/25 is directly connected, eth1, weight 1, 00:01:08
+L>* 10.10.0.1/32 is directly connected, eth1, weight 1, 00:01:08
+O   10.10.0.128/26 [110/10] is directly connected, eth2, weight 1, 00:01:08
+C>* 10.10.0.128/26 is directly connected, eth2, weight 1, 00:01:08
+L>* 10.10.0.129/32 is directly connected, eth2, weight 1, 00:01:08
+O>* 10.10.0.192/27 [110/20] via 10.10.0.226, eth3, weight 1, 00:00:53
+O   10.10.0.224/30 [110/10] is directly connected, eth3, weight 1, 00:01:08
+C>* 10.10.0.224/30 is directly connected, eth3, weight 1, 00:01:08
+L>* 10.10.0.225/32 is directly connected, eth3, weight 1, 00:01:08
+C>* 172.20.20.0/24 is directly connected, eth0, weight 1, 00:01:08
+L>* 172.20.20.5/32 is directly connected, eth0, weight 1, 00:01:08
