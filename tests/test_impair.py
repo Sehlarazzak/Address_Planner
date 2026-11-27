@@ -127,7 +127,7 @@ class TestRun(unittest.TestCase):
         self.assertEqual(len(result["rows"]), 3 * 3 * 2)
         applies = [c for c in rec.calls if "netem" in c and "delay" in c and "50ms" in c]
         self.assertEqual(len(applies), 3 * 2)                      # C2: 3 runs x 2 routers
-        self.assertTrue({c[2] for c in applies} == {"clab-small-3-lans-2-routers-r-A", "clab-small-3-lans-2-routers-r-B"})
+        self.assertTrue({c[2] for c in applies} == {"clab-small-3-lans-2-routers-R1", "clab-small-3-lans-2-routers-R2"})
         for name in ("impairment_runs.csv", "impairment_summary.csv", "impairment_summary.md", "plan.json"):
             self.assertIn(name, files)
 

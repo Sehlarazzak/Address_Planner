@@ -198,14 +198,13 @@ class TestPlanSemantics(unittest.TestCase):
         ]
         validate_plan_semantics(p)
 
-    
     def test_todo_ipv4_subnet_equal_to_the_whole_block_overlapping_others(self):
         bad = plan()
         bad["ipv4_block"] = "10.10.0.0/24"
         bad["subnets"] = [
             {
                 "id": "whole",
-                "site": "hq",
+                "site": "A",
                 "name": "all",
                 "type": "lan",
                 "hosts_requested": 100,
@@ -218,7 +217,7 @@ class TestPlanSemantics(unittest.TestCase):
             },
             {
                 "id": "sub",
-                "site": "hq",
+                "site": "A",
                 "name": "part",
                 "type": "lan",
                 "hosts_requested": 10,
@@ -233,7 +232,7 @@ class TestPlanSemantics(unittest.TestCase):
         bad["routers"] = [
             {
                 "name": "r1",
-                "site": "hq",
+                "site": "A",
                 "interfaces": [
                     {
                         "name": "eth1",
@@ -250,8 +249,9 @@ class TestPlanSemantics(unittest.TestCase):
                 ],
             }
         ]
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "(?i)overlap"):
             validate_plan_semantics(bad)
+  
 
 if __name__ == "__main__":
     unittest.main()

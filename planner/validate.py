@@ -253,13 +253,41 @@ def _check_plan_ipv6(data, subnets):
                 raise ValueError(f"Duplicate IPv6 address {addr} (already used elsewhere)")
             used.add(addr)
 
-
 def _check_plan_ipv4(data, subnets):
-    """Validate IPv4 subnets, overlaps, host capacity, and interfaces."""
+    """Validate IPv4 subnets, optional site/link blocks, overlaps, host capacity, and interfaces."""
     try:
         block = ipaddress.IPv4Network(data["ipv4_block"], strict=True)
     except ValueError as exc:
         raise ValueError(f"Invalid ipv4_block in plan: {exc}") from exc
+
+    ipv4_sites = {}
+    if "ipv4_sites" in data and data["ipv4_sites"] is not None:
+        try:
+            for site_name, cidr in data["ipv4_sites"].items():
+                s_net = ipaddress.IPv4Network(cidr, strict=True)
+                if not s_net.subnet_of(block):
+                    raise ValueError(f"IPv4 site block {site_name!r} ({s_net}) is outside {block}")
+                ipv4_sites[site_name] = s_net
+        except ValueError as exc:
+            raise ValueError(f"Invalid ipv4_sites in plan: {exc}") from exc
+
+        ordered_sites = sorted(
+            ipv4_sites.items(), key=lambda kv: (int(kv[1].network_address), kv[1].prefixlen)
+        )
+        for (name_a, net_a), (name_b, net_b) in zip(ordered_sites, ordered_sites[1:]):
+            if net_a.overlaps(net_b):
+                raise ValueError(
+                    f"IPv4 site block overlap between {name_a!r} ({net_a}) and {name_b!r} ({net_b})"
+                )
+
+    ipv4_link_block = None
+    if "ipv4_link_block" in data and data["ipv4_link_block"] is not None:
+        try:
+            ipv4_link_block = ipaddress.IPv4Network(data["ipv4_link_block"], strict=True)
+        except ValueError as exc:
+            raise ValueError(f"Invalid ipv4_link_block in plan: {exc}") from exc
+        if not ipv4_link_block.subnet_of(block):
+            raise ValueError(f"IPv4 link block {ipv4_link_block} is outside {block}")
 
     nets = {}
     for sid, sub in subnets.items():
@@ -283,6 +311,15 @@ def _check_plan_ipv4(data, subnets):
                 f"Subnet {sid!r}: {net} has {sub['ipv4_usable']} usable addresses, "
                 f"but {sub['hosts_required']} are required"
             )
+        if sub["type"] == "lan" and ipv4_sites:
+            s_block = ipv4_sites.get(sub["site"])
+            if s_block is None:
+                raise ValueError(f"Subnet {sid!r}: site {sub['site']!r} missing from ipv4_sites")
+            if not net.subnet_of(s_block):
+                raise ValueError(f"Subnet {sid!r}: {net} is outside its site block {s_block}")
+        if sub["type"] == "link" and ipv4_link_block is not None:
+            if not net.subnet_of(ipv4_link_block):
+                raise ValueError(f"Subnet {sid!r}: link {net} is outside ipv4_link_block {ipv4_link_block}")
         nets[sid] = net
 
     ordered = sorted(nets.items(), key=lambda kv: (int(kv[1].network_address), kv[1].prefixlen))
