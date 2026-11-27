@@ -1,0 +1,308 @@
+{
+  "organization": "Large (10 LANs, 4 routers)",
+  "ipv4_block": "10.30.0.0/19",
+  "ipv6_prefix": "2001:db8:1000::/48",
+  "ipv6_sites": {
+    "HQ": "2001:db8:1000:1000::/52",
+    "Branch1": "2001:db8:1000:2000::/52",
+    "Branch2": "2001:db8:1000:3000::/52",
+    "Branch3": "2001:db8:1000:4000::/52"
+  },
+  "ipv6_link_block": "2001:db8:1000:f000::/52",
+  "subnets": [
+    {
+      "id": "HQ:Servers",
+      "site": "HQ",
+      "name": "Servers",
+      "type": "lan",
+      "hosts_requested": 250,
+      "growth_pct": 20,
+      "hosts_required": 300,
+      "ipv4_cidr": "10.30.0.0/23",
+      "ipv4_prefixlen": 23,
+      "ipv4_usable": 510,
+      "ipv6_cidr": "2001:db8:1000:1000::/64"
+    },
+    {
+      "id": "HQ:Staff",
+      "site": "HQ",
+      "name": "Staff",
+      "type": "lan",
+      "hosts_requested": 120,
+      "growth_pct": 20,
+      "hosts_required": 144,
+      "ipv4_cidr": "10.30.2.0/24",
+      "ipv4_prefixlen": 24,
+      "ipv4_usable": 254,
+      "ipv6_cidr": "2001:db8:1000:1001::/64"
+    },
+    {
+      "id": "HQ:Mgmt",
+      "site": "HQ",
+      "name": "Mgmt",
+      "type": "lan",
+      "hosts_requested": 40,
+      "growth_pct": 20,
+      "hosts_required": 48,
+      "ipv4_cidr": "10.30.4.128/26",
+      "ipv4_prefixlen": 26,
+      "ipv4_usable": 62,
+      "ipv6_cidr": "2001:db8:1000:1002::/64"
+    },
+    {
+      "id": "Branch1:Staff",
+      "site": "Branch1",
+      "name": "Staff",
+      "type": "lan",
+      "hosts_requested": 100,
+      "growth_pct": 20,
+      "hosts_required": 120,
+      "ipv4_cidr": "10.30.3.0/25",
+      "ipv4_prefixlen": 25,
+      "ipv4_usable": 126,
+      "ipv6_cidr": "2001:db8:1000:2000::/64"
+    },
+    {
+      "id": "Branch1:Guest",
+      "site": "Branch1",
+      "name": "Guest",
+      "type": "lan",
+      "hosts_requested": 60,
+      "growth_pct": 30,
+      "hosts_required": 78,
+      "ipv4_cidr": "10.30.3.128/25",
+      "ipv4_prefixlen": 25,
+      "ipv4_usable": 126,
+      "ipv6_cidr": "2001:db8:1000:2001::/64"
+    },
+    {
+      "id": "Branch2:Staff",
+      "site": "Branch2",
+      "name": "Staff",
+      "type": "lan",
+      "hosts_requested": 80,
+      "growth_pct": 20,
+      "hosts_required": 96,
+      "ipv4_cidr": "10.30.4.0/25",
+      "ipv4_prefixlen": 25,
+      "ipv4_usable": 126,
+      "ipv6_cidr": "2001:db8:1000:3000::/64"
+    },
+    {
+      "id": "Branch2:Guest",
+      "site": "Branch2",
+      "name": "Guest",
+      "type": "lan",
+      "hosts_requested": 30,
+      "growth_pct": 30,
+      "hosts_required": 39,
+      "ipv4_cidr": "10.30.4.192/26",
+      "ipv4_prefixlen": 26,
+      "ipv4_usable": 62,
+      "ipv6_cidr": "2001:db8:1000:3001::/64"
+    },
+    {
+      "id": "Branch2:IoT",
+      "site": "Branch2",
+      "name": "IoT",
+      "type": "lan",
+      "hosts_requested": 14,
+      "growth_pct": 20,
+      "hosts_required": 17,
+      "ipv4_cidr": "10.30.5.64/27",
+      "ipv4_prefixlen": 27,
+      "ipv4_usable": 30,
+      "ipv6_cidr": "2001:db8:1000:3002::/64"
+    },
+    {
+      "id": "Branch3:Staff",
+      "site": "Branch3",
+      "name": "Staff",
+      "type": "lan",
+      "hosts_requested": 50,
+      "growth_pct": 20,
+      "hosts_required": 60,
+      "ipv4_cidr": "10.30.5.0/26",
+      "ipv4_prefixlen": 26,
+      "ipv4_usable": 62,
+      "ipv6_cidr": "2001:db8:1000:4000::/64"
+    },
+    {
+      "id": "Branch3:Lab",
+      "site": "Branch3",
+      "name": "Lab",
+      "type": "lan",
+      "hosts_requested": 20,
+      "growth_pct": 20,
+      "hosts_required": 24,
+      "ipv4_cidr": "10.30.5.96/27",
+      "ipv4_prefixlen": 27,
+      "ipv4_usable": 30,
+      "ipv6_cidr": "2001:db8:1000:4001::/64"
+    },
+    {
+      "id": "link:1:HQ-Branch1",
+      "site": "HQ",
+      "name": "HQ-Branch1",
+      "type": "link",
+      "hosts_requested": 2,
+      "growth_pct": 0,
+      "hosts_required": 2,
+      "ipv4_cidr": "10.30.5.128/30",
+      "ipv4_prefixlen": 30,
+      "ipv4_usable": 2,
+      "ipv6_cidr": "2001:db8:1000:f000::/64"
+    },
+    {
+      "id": "link:2:HQ-Branch2",
+      "site": "HQ",
+      "name": "HQ-Branch2",
+      "type": "link",
+      "hosts_requested": 2,
+      "growth_pct": 0,
+      "hosts_required": 2,
+      "ipv4_cidr": "10.30.5.132/30",
+      "ipv4_prefixlen": 30,
+      "ipv4_usable": 2,
+      "ipv6_cidr": "2001:db8:1000:f001::/64"
+    },
+    {
+      "id": "link:3:HQ-Branch3",
+      "site": "HQ",
+      "name": "HQ-Branch3",
+      "type": "link",
+      "hosts_requested": 2,
+      "growth_pct": 0,
+      "hosts_required": 2,
+      "ipv4_cidr": "10.30.5.136/30",
+      "ipv4_prefixlen": 30,
+      "ipv4_usable": 2,
+      "ipv6_cidr": "2001:db8:1000:f002::/64"
+    }
+  ],
+  "routers": [
+    {
+      "name": "r-HQ",
+      "site": "HQ",
+      "interfaces": [
+        {
+          "name": "eth1",
+          "subnet_id": "HQ:Servers",
+          "ipv4": "10.30.0.1",
+          "ipv6": "2001:db8:1000:1000::1"
+        },
+        {
+          "name": "eth2",
+          "subnet_id": "HQ:Staff",
+          "ipv4": "10.30.2.1",
+          "ipv6": "2001:db8:1000:1001::1"
+        },
+        {
+          "name": "eth3",
+          "subnet_id": "HQ:Mgmt",
+          "ipv4": "10.30.4.129",
+          "ipv6": "2001:db8:1000:1002::1"
+        },
+        {
+          "name": "eth4",
+          "subnet_id": "link:1:HQ-Branch1",
+          "ipv4": "10.30.5.129",
+          "ipv6": "2001:db8:1000:f000::1"
+        },
+        {
+          "name": "eth5",
+          "subnet_id": "link:2:HQ-Branch2",
+          "ipv4": "10.30.5.133",
+          "ipv6": "2001:db8:1000:f001::1"
+        },
+        {
+          "name": "eth6",
+          "subnet_id": "link:3:HQ-Branch3",
+          "ipv4": "10.30.5.137",
+          "ipv6": "2001:db8:1000:f002::1"
+        }
+      ]
+    },
+    {
+      "name": "r-Branch1",
+      "site": "Branch1",
+      "interfaces": [
+        {
+          "name": "eth1",
+          "subnet_id": "Branch1:Staff",
+          "ipv4": "10.30.3.1",
+          "ipv6": "2001:db8:1000:2000::1"
+        },
+        {
+          "name": "eth2",
+          "subnet_id": "Branch1:Guest",
+          "ipv4": "10.30.3.129",
+          "ipv6": "2001:db8:1000:2001::1"
+        },
+        {
+          "name": "eth3",
+          "subnet_id": "link:1:HQ-Branch1",
+          "ipv4": "10.30.5.130",
+          "ipv6": "2001:db8:1000:f000::2"
+        }
+      ]
+    },
+    {
+      "name": "r-Branch2",
+      "site": "Branch2",
+      "interfaces": [
+        {
+          "name": "eth1",
+          "subnet_id": "Branch2:Staff",
+          "ipv4": "10.30.4.1",
+          "ipv6": "2001:db8:1000:3000::1"
+        },
+        {
+          "name": "eth2",
+          "subnet_id": "Branch2:Guest",
+          "ipv4": "10.30.4.193",
+          "ipv6": "2001:db8:1000:3001::1"
+        },
+        {
+          "name": "eth3",
+          "subnet_id": "Branch2:IoT",
+          "ipv4": "10.30.5.65",
+          "ipv6": "2001:db8:1000:3002::1"
+        },
+        {
+          "name": "eth4",
+          "subnet_id": "link:2:HQ-Branch2",
+          "ipv4": "10.30.5.134",
+          "ipv6": "2001:db8:1000:f001::2"
+        }
+      ]
+    },
+    {
+      "name": "r-Branch3",
+      "site": "Branch3",
+      "interfaces": [
+        {
+          "name": "eth1",
+          "subnet_id": "Branch3:Staff",
+          "ipv4": "10.30.5.1",
+          "ipv6": "2001:db8:1000:4000::1"
+        },
+        {
+          "name": "eth2",
+          "subnet_id": "Branch3:Lab",
+          "ipv4": "10.30.5.97",
+          "ipv6": "2001:db8:1000:4001::1"
+        },
+        {
+          "name": "eth3",
+          "subnet_id": "link:3:HQ-Branch3",
+          "ipv4": "10.30.5.138",
+          "ipv6": "2001:db8:1000:f002::2"
+        }
+      ]
+    }
+  ],
+  "metrics": {
+    "allocation_time_ms": 0.593
+  }
+}

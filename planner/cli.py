@@ -6,12 +6,15 @@
     python -m planner.cli configure  --plan  data/plan_example_mini.json        (after containerlab deploy)
     python -m planner.cli pingmatrix --plan  data/plan_example_mini.json [--dry-run] [--csv results.csv]
     python -m planner.cli evidence   --plan  data/plan_example_mini.json --out evidence/mini
+    python -m planner.cli runlab     --input data/org_large.json            (the whole chain, one organization)
 """
 import argparse
 import json
 import sys
+import time
+from pathlib import Path
 
-from planner import configgen, evidence, labsetup, pingmatrix
+from planner import configgen, evidence, labsetup, pingmatrix, runlab
 from planner.validate import (load_json, validate_input_semantics, validate_plan_semantics,
                               validate_structure)
 
@@ -80,6 +83,13 @@ def cmd_evidence(args):
     print(f"OK: saved {len(results)} files and plan.json in {args.out}")
 
 
+def cmd_runlab(args):
+    name = args.name or Path(args.input).stem.replace("org_", "")
+    summary = runlab.run_lab(args.input, name, wait=args.wait, keep=args.keep, workers=args.workers)
+    if summary["pass_rate"] < 100:
+        sys.exit(f"error: only {summary['pass_rate']}% of the pings passed")
+
+
 def cmd_pingmatrix(args):
     plan = _load_valid_plan(args.plan)
     lab = args.lab_name or configgen.default_lab_name(plan)
@@ -87,11 +97,15 @@ def cmd_pingmatrix(args):
         for entry in pingmatrix.build_ping_matrix(plan):
             print(" ".join(pingmatrix.ping_command(entry, lab)))
         return
-    results = pingmatrix.run_ping_matrix(plan, lab)
-    for r in results:
-        line = f"{'PASS' if r['passed'] else 'FAIL'}  {r['src']} -> {r['dst']} ({r['family']}, {r['target']})"
-        print(line if r["passed"] or not r["detail"] else f"{line}\n      {r['detail']}")
-    print(f"Pass rate: {pingmatrix.pass_rate(results):.1f}% ({sum(r['passed'] for r in results)}/{len(results)})")
+
+    def show(done, total, r):
+        line = f"[{done}/{total}] {'PASS' if r['passed'] else 'FAIL'}  {r['src']} -> {r['dst']} ({r['family']}, {r['target']})"
+        print(line if r["passed"] or not r["detail"] else f"{line}\n      {r['detail']}", flush=True)
+
+    started = time.perf_counter()
+    results = pingmatrix.run_ping_matrix(plan, lab, workers=args.workers, progress=show)
+    seconds = time.perf_counter() - started
+    print(f"Pass rate: {pingmatrix.pass_rate(results):.1f}% ({sum(r['passed'] for r in results)}/{len(results)}) in {seconds:.1f} s")
     if args.csv:
         pingmatrix.write_csv(results, args.csv)
         print(f"Wrote {args.csv}")
@@ -129,17 +143,26 @@ def main(argv=None):
     p.add_argument("--lab-name")
     p.set_defaults(func=cmd_evidence)
 
+    p = sub.add_parser("runlab", help="the whole chain for one organization: allocate, deploy, test, save evidence, destroy")
+    p.add_argument("--input", required=True)
+    p.add_argument("--name", help="folder name under evidence/ (default: the input file name without org_)")
+    p.add_argument("--wait", type=int, default=60, help="seconds to wait for OSPF before pinging (default 60)")
+    p.add_argument("--workers", type=int, default=8)
+    p.add_argument("--keep", action="store_true", help="do not destroy the lab at the end")
+    p.set_defaults(func=cmd_runlab)
+
     p = sub.add_parser("pingmatrix", help="run the all-pairs ping test on the deployed lab")
     p.add_argument("--plan", required=True)
     p.add_argument("--lab-name")
     p.add_argument("--csv")
+    p.add_argument("--workers", type=int, default=8, help="how many pings to run at the same time (default 8)")
     p.add_argument("--dry-run", action="store_true", help="print the commands without running them")
     p.set_defaults(func=cmd_pingmatrix)
 
     args = parser.parse_args(argv)
     try:
         args.func(args)
-    except (ValueError, OSError) as exc:
+    except (ValueError, OSError, RuntimeError) as exc:
         sys.exit(f"error: {exc}")
 
 

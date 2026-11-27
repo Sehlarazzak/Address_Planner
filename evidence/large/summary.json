@@ -1,0 +1,16 @@
+{
+  "name": "large",
+  "organization": "Large (10 LANs, 4 routers)",
+  "lab": "large-10-lans-4-routers",
+  "routers": 4,
+  "hosts": 10,
+  "pings": 180,
+  "passed": 180,
+  "pass_rate": 100.0,
+  "attempts": 1,
+  "wait_seconds": 60,
+  "ping_seconds": 33.7,
+  "allocation_time_ms": 0.593,
+  "evidence_files": 24,
+  "evidence_failures": []
+}

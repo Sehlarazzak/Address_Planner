@@ -5,29 +5,29 @@ Codes: K - kernel route, C - connected, L - local, S - static,
        > - selected route, * - FIB route, q - queued, r - rejected, b - backup
        t - trapped, o - offload failure
 
-K>* ::/0 [0/1024] via 3fff:172:20:20::1, eth0, weight 1, 00:07:14
-O   2001:db8:1000:1000::/64 [110/10] is directly connected, eth1, weight 1, 00:07:12
-C>* 2001:db8:1000:1000::/64 is directly connected, eth1, weight 1, 00:07:13
-L>* 2001:db8:1000:1000::1/128 is directly connected, eth1, weight 1, 00:07:13
-O   2001:db8:1000:1001::/64 [110/10] is directly connected, eth2, weight 1, 00:07:12
-C>* 2001:db8:1000:1001::/64 is directly connected, eth2, weight 1, 00:07:13
-L>* 2001:db8:1000:1001::1/128 is directly connected, eth2, weight 1, 00:07:13
-O>* 2001:db8:1000:2000::/64 [110/20] via fe80::a8c1:abff:fed2:2af4, eth3, weight 1, 00:06:57
-O>* 2001:db8:1000:2001::/64 [110/20] via fe80::a8c1:abff:fed2:2af4, eth3, weight 1, 00:06:57
-O>* 2001:db8:1000:3000::/64 [110/20] via fe80::a8c1:abff:fe20:9857, eth4, weight 1, 00:06:58
-O>* 2001:db8:1000:3001::/64 [110/20] via fe80::a8c1:abff:fe20:9857, eth4, weight 1, 00:06:58
-O   2001:db8:1000:f000::/64 [110/10] is directly connected, eth3, weight 1, 00:07:12
-C>* 2001:db8:1000:f000::/64 is directly connected, eth3, weight 1, 00:07:13
-L>* 2001:db8:1000:f000::1/128 is directly connected, eth3, weight 1, 00:07:13
-O>* 2001:db8:1000:f000::2/128 [110/10] via fe80::a8c1:abff:fed2:2af4, eth3, weight 1, 00:06:57
-O   2001:db8:1000:f001::/64 [110/10] is directly connected, eth4, weight 1, 00:07:12
-C>* 2001:db8:1000:f001::/64 is directly connected, eth4, weight 1, 00:07:12
-L>* 2001:db8:1000:f001::1/128 is directly connected, eth4, weight 1, 00:07:12
-O>* 2001:db8:1000:f001::2/128 [110/10] via fe80::a8c1:abff:fe20:9857, eth4, weight 1, 00:06:58
-C>* 3fff:172:20:20::/64 is directly connected, eth0, weight 1, 00:07:14
-L>* 3fff:172:20:20::7/128 is directly connected, eth0, weight 1, 00:07:14
-C * fe80::/64 is directly connected, eth4, weight 1, 00:07:12
-C * fe80::/64 is directly connected, eth3, weight 1, 00:07:12
-C * fe80::/64 is directly connected, eth1, weight 1, 00:07:13
-C * fe80::/64 is directly connected, eth2, weight 1, 00:07:13
-C>* fe80::/64 is directly connected, eth0, weight 1, 00:07:13
+K>* ::/0 [0/1024] via 3fff:172:20:20::1, eth0, weight 1, 00:01:24
+O   2001:db8:1000:1000::/64 [110/10] is directly connected, eth1, weight 1, 00:01:21
+C>* 2001:db8:1000:1000::/64 is directly connected, eth1, weight 1, 00:01:22
+L>* 2001:db8:1000:1000::1/128 is directly connected, eth1, weight 1, 00:01:22
+O   2001:db8:1000:1001::/64 [110/10] is directly connected, eth2, weight 1, 00:01:21
+C>* 2001:db8:1000:1001::/64 is directly connected, eth2, weight 1, 00:01:21
+L>* 2001:db8:1000:1001::1/128 is directly connected, eth2, weight 1, 00:01:21
+O>* 2001:db8:1000:2000::/64 [110/20] via fe80::a8c1:abff:fe19:c388, eth3, weight 1, 00:01:07
+O>* 2001:db8:1000:2001::/64 [110/20] via fe80::a8c1:abff:fe19:c388, eth3, weight 1, 00:01:07
+O>* 2001:db8:1000:3000::/64 [110/20] via fe80::a8c1:abff:fee5:9e12, eth4, weight 1, 00:01:07
+O>* 2001:db8:1000:3001::/64 [110/20] via fe80::a8c1:abff:fee5:9e12, eth4, weight 1, 00:01:07
+O   2001:db8:1000:f000::/64 [110/10] is directly connected, eth3, weight 1, 00:01:21
+C>* 2001:db8:1000:f000::/64 is directly connected, eth3, weight 1, 00:01:22
+L>* 2001:db8:1000:f000::1/128 is directly connected, eth3, weight 1, 00:01:22
+O>* 2001:db8:1000:f000::2/128 [110/10] via fe80::a8c1:abff:fe19:c388, eth3, weight 1, 00:01:07
+O   2001:db8:1000:f001::/64 [110/10] is directly connected, eth4, weight 1, 00:01:21
+C>* 2001:db8:1000:f001::/64 is directly connected, eth4, weight 1, 00:01:22
+L>* 2001:db8:1000:f001::1/128 is directly connected, eth4, weight 1, 00:01:22
+O>* 2001:db8:1000:f001::2/128 [110/10] via fe80::a8c1:abff:fee5:9e12, eth4, weight 1, 00:01:07
+C>* 3fff:172:20:20::/64 is directly connected, eth0, weight 1, 00:01:24
+L>* 3fff:172:20:20::6/128 is directly connected, eth0, weight 1, 00:01:24
+C * fe80::/64 is directly connected, eth4, weight 1, 00:01:22
+C * fe80::/64 is directly connected, eth3, weight 1, 00:01:22
+C * fe80::/64 is directly connected, eth1, weight 1, 00:01:22
+C * fe80::/64 is directly connected, eth2, weight 1, 00:01:22
+C>* fe80::/64 is directly connected, eth0, weight 1, 00:01:22

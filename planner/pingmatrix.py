@@ -1,6 +1,7 @@
 """The reachability test: every LAN host pings every other LAN host over IPv4 and IPv6."""
 import csv
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from planner.configgen import build_model, default_lab_name
 
@@ -34,16 +35,30 @@ def output_detail(done):
     return lines[-1][:200] if lines else ""
 
 
-def run_ping_matrix(plan, lab_name=None, runner=subprocess.run, count=2):
-    """Run every test; return a list of entries with a "passed" True/False added.
+def run_ping_matrix(plan, lab_name=None, runner=subprocess.run, count=2, workers=8, progress=None):
+    """Run every test (several at a time); return a list of entries with "passed" and "detail" added.
 
+    The results are in the same order as build_ping_matrix(), however the pings finish.
+    `progress(done, total, result)` is called, from this thread, each time one ping finishes.
     `runner` is injectable so tests can fake docker."""
     lab_name = lab_name or default_lab_name(plan)
-    results = []
-    for entry in build_ping_matrix(plan):
+    entries = build_ping_matrix(plan)
+
+    def one(entry):
         done = runner(ping_command(entry, lab_name, count), capture_output=True, text=True)
         passed = done.returncode == 0
-        results.append({**entry, "passed": passed, "detail": "" if passed else output_detail(done)})
+        return {**entry, "passed": passed, "detail": "" if passed else output_detail(done)}
+
+    results = [None] * len(entries)
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
+        futures = {pool.submit(one, entry): index for index, entry in enumerate(entries)}
+        finished = 0
+        for future in as_completed(futures):
+            index = futures[future]
+            results[index] = future.result()
+            finished += 1
+            if progress:
+                progress(finished, len(entries), results[index])
     return results
 
 

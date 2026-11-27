@@ -1,0 +1,29 @@
+Codes: K - kernel route, C - connected, L - local, S - static,
+       R - RIP, O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric, t - Table-Direct,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+K>* 0.0.0.0/0 [0/0] via 172.20.20.1, eth0, weight 1, 00:01:52
+O>* 10.30.0.0/23 [110/20] via 10.30.5.137, eth3, weight 1, 00:01:35
+O>* 10.30.2.0/24 [110/20] via 10.30.5.137, eth3, weight 1, 00:01:35
+O>* 10.30.3.0/25 [110/30] via 10.30.5.137, eth3, weight 1, 00:01:35
+O>* 10.30.3.128/25 [110/30] via 10.30.5.137, eth3, weight 1, 00:01:35
+O>* 10.30.4.0/25 [110/30] via 10.30.5.137, eth3, weight 1, 00:01:35
+O>* 10.30.4.128/26 [110/20] via 10.30.5.137, eth3, weight 1, 00:01:35
+O>* 10.30.4.192/26 [110/30] via 10.30.5.137, eth3, weight 1, 00:01:35
+O   10.30.5.0/26 [110/10] is directly connected, eth1, weight 1, 00:01:52
+C>* 10.30.5.0/26 is directly connected, eth1, weight 1, 00:01:52
+L>* 10.30.5.1/32 is directly connected, eth1, weight 1, 00:01:52
+O>* 10.30.5.64/27 [110/30] via 10.30.5.137, eth3, weight 1, 00:01:35
+O   10.30.5.96/27 [110/10] is directly connected, eth2, weight 1, 00:01:51
+C>* 10.30.5.96/27 is directly connected, eth2, weight 1, 00:01:51
+L>* 10.30.5.97/32 is directly connected, eth2, weight 1, 00:01:51
+O>* 10.30.5.128/30 [110/20] via 10.30.5.137, eth3, weight 1, 00:01:35
+O>* 10.30.5.132/30 [110/20] via 10.30.5.137, eth3, weight 1, 00:01:35
+O   10.30.5.136/30 [110/10] is directly connected, eth3, weight 1, 00:01:50
+C>* 10.30.5.136/30 is directly connected, eth3, weight 1, 00:01:50
+L>* 10.30.5.138/32 is directly connected, eth3, weight 1, 00:01:50
+C>* 172.20.20.0/24 is directly connected, eth0, weight 1, 00:01:52
+L>* 172.20.20.14/32 is directly connected, eth0, weight 1, 00:01:52

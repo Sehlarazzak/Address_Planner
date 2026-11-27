@@ -5,27 +5,27 @@ Codes: K - kernel route, C - connected, L - local, S - static,
        > - selected route, * - FIB route, q - queued, r - rejected, b - backup
        t - trapped, o - offload failure
 
-K>* ::/0 [0/1024] via 3fff:172:20:20::1, eth0, weight 1, 00:07:15
-O>* 2001:db8:1000:1000::/64 [110/20] via fe80::a8c1:abff:feb4:3f7f, eth3, weight 1, 00:06:58
-O>* 2001:db8:1000:1001::/64 [110/20] via fe80::a8c1:abff:feb4:3f7f, eth3, weight 1, 00:06:58
-O   2001:db8:1000:2000::/64 [110/10] is directly connected, eth1, weight 1, 00:07:13
-C>* 2001:db8:1000:2000::/64 is directly connected, eth1, weight 1, 00:07:14
-L>* 2001:db8:1000:2000::1/128 is directly connected, eth1, weight 1, 00:07:14
-O   2001:db8:1000:2001::/64 [110/10] is directly connected, eth2, weight 1, 00:07:13
-C>* 2001:db8:1000:2001::/64 is directly connected, eth2, weight 1, 00:07:14
-L>* 2001:db8:1000:2001::1/128 is directly connected, eth2, weight 1, 00:07:14
-O>* 2001:db8:1000:3000::/64 [110/30] via fe80::a8c1:abff:feb4:3f7f, eth3, weight 1, 00:06:58
-O>* 2001:db8:1000:3001::/64 [110/30] via fe80::a8c1:abff:feb4:3f7f, eth3, weight 1, 00:06:58
-O   2001:db8:1000:f000::/64 [110/10] is directly connected, eth3, weight 1, 00:07:13
-C>* 2001:db8:1000:f000::/64 is directly connected, eth3, weight 1, 00:07:13
-O>* 2001:db8:1000:f000::1/128 [110/10] via fe80::a8c1:abff:feb4:3f7f, eth3, weight 1, 00:06:58
-L>* 2001:db8:1000:f000::2/128 is directly connected, eth3, weight 1, 00:07:13
-O>* 2001:db8:1000:f001::/64 [110/20] via fe80::a8c1:abff:feb4:3f7f, eth3, weight 1, 00:06:58
-O>* 2001:db8:1000:f001::1/128 [110/10] via fe80::a8c1:abff:feb4:3f7f, eth3, weight 1, 00:06:58
-O>* 2001:db8:1000:f001::2/128 [110/20] via fe80::a8c1:abff:feb4:3f7f, eth3, weight 1, 00:06:58
-C>* 3fff:172:20:20::/64 is directly connected, eth0, weight 1, 00:07:15
-L>* 3fff:172:20:20::5/128 is directly connected, eth0, weight 1, 00:07:15
-C * fe80::/64 is directly connected, eth3, weight 1, 00:07:13
-C * fe80::/64 is directly connected, eth1, weight 1, 00:07:14
-C * fe80::/64 is directly connected, eth2, weight 1, 00:07:14
-C>* fe80::/64 is directly connected, eth0, weight 1, 00:07:15
+K>* ::/0 [0/1024] via 3fff:172:20:20::1, eth0, weight 1, 00:01:24
+O>* 2001:db8:1000:1000::/64 [110/20] via fe80::a8c1:abff:fe43:a81e, eth3, weight 1, 00:01:08
+O>* 2001:db8:1000:1001::/64 [110/20] via fe80::a8c1:abff:fe43:a81e, eth3, weight 1, 00:01:08
+O   2001:db8:1000:2000::/64 [110/10] is directly connected, eth1, weight 1, 00:01:22
+C>* 2001:db8:1000:2000::/64 is directly connected, eth1, weight 1, 00:01:22
+L>* 2001:db8:1000:2000::1/128 is directly connected, eth1, weight 1, 00:01:22
+O   2001:db8:1000:2001::/64 [110/10] is directly connected, eth2, weight 1, 00:01:22
+C>* 2001:db8:1000:2001::/64 is directly connected, eth2, weight 1, 00:01:22
+L>* 2001:db8:1000:2001::1/128 is directly connected, eth2, weight 1, 00:01:22
+O>* 2001:db8:1000:3000::/64 [110/30] via fe80::a8c1:abff:fe43:a81e, eth3, weight 1, 00:01:08
+O>* 2001:db8:1000:3001::/64 [110/30] via fe80::a8c1:abff:fe43:a81e, eth3, weight 1, 00:01:08
+O   2001:db8:1000:f000::/64 [110/10] is directly connected, eth3, weight 1, 00:01:22
+C>* 2001:db8:1000:f000::/64 is directly connected, eth3, weight 1, 00:01:22
+O>* 2001:db8:1000:f000::1/128 [110/10] via fe80::a8c1:abff:fe43:a81e, eth3, weight 1, 00:01:08
+L>* 2001:db8:1000:f000::2/128 is directly connected, eth3, weight 1, 00:01:22
+O>* 2001:db8:1000:f001::/64 [110/20] via fe80::a8c1:abff:fe43:a81e, eth3, weight 1, 00:01:08
+O>* 2001:db8:1000:f001::1/128 [110/10] via fe80::a8c1:abff:fe43:a81e, eth3, weight 1, 00:01:08
+O>* 2001:db8:1000:f001::2/128 [110/20] via fe80::a8c1:abff:fe43:a81e, eth3, weight 1, 00:01:08
+C>* 3fff:172:20:20::/64 is directly connected, eth0, weight 1, 00:01:24
+L>* 3fff:172:20:20::4/128 is directly connected, eth0, weight 1, 00:01:24
+C * fe80::/64 is directly connected, eth3, weight 1, 00:01:22
+C * fe80::/64 is directly connected, eth2, weight 1, 00:01:22
+C * fe80::/64 is directly connected, eth1, weight 1, 00:01:22
+C>* fe80::/64 is directly connected, eth0, weight 1, 00:01:23

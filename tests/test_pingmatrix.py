@@ -1,6 +1,7 @@
 """Tests for planner/pingmatrix.py. Docker is faked, so these run anywhere."""
 import csv
 import tempfile
+import time
 import unittest
 from types import SimpleNamespace
 
@@ -74,6 +75,30 @@ class TestRun(unittest.TestCase):
     def test_passed_ping_has_no_detail(self):
         results = run_ping_matrix(plan(), "lab1", runner=fake_runner())
         self.assertTrue(all(r["detail"] == "" for r in results))
+
+    def test_progress_is_reported_once_per_ping(self):
+        seen = []
+        run_ping_matrix(plan(), "lab1", runner=fake_runner(), progress=lambda d, t, r: seen.append((d, t)))
+        self.assertEqual([d for d, _ in seen], list(range(1, 13)))
+        self.assertTrue(all(t == 12 for _, t in seen))
+
+    def test_results_keep_the_matrix_order_when_run_in_parallel(self):
+        results = run_ping_matrix(plan(), "lab1", runner=fake_runner(), workers=8)
+        expected = [(e["src"], e["dst"], e["family"]) for e in build_ping_matrix(plan())]
+        self.assertEqual([(r["src"], r["dst"], r["family"]) for r in results], expected)
+
+    def test_a_single_worker_gives_the_same_answer(self):
+        one = run_ping_matrix(plan(), "lab1", runner=fake_runner(), workers=1)
+        many = run_ping_matrix(plan(), "lab1", runner=fake_runner(), workers=6)
+        self.assertEqual(one, many)
+
+    def test_pings_really_run_at_the_same_time(self):
+        def slow(cmd, **kwargs):
+            time.sleep(0.1)
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        started = time.perf_counter()
+        run_ping_matrix(plan(), "lab1", runner=slow, workers=6)      # 12 pings x 0.1 s = 1.2 s one at a time
+        self.assertLess(time.perf_counter() - started, 0.8)
 
     def test_pass_rate_of_nothing_is_zero(self):
         self.assertEqual(pass_rate([]), 0.0)

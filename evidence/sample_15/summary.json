@@ -1,0 +1,16 @@
+{
+  "name": "sample_15",
+  "organization": "Brief sample (4 sites, 15 subnets)",
+  "lab": "brief-sample-4-sites-15-subnet",
+  "routers": 4,
+  "hosts": 12,
+  "pings": 264,
+  "passed": 264,
+  "pass_rate": 100.0,
+  "attempts": 1,
+  "wait_seconds": 60,
+  "ping_seconds": 47.1,
+  "allocation_time_ms": 0.419,
+  "evidence_files": 24,
+  "evidence_failures": []
+}
