@@ -1,0 +1,7 @@
+condition,family,runs,delay_ms_per_direction,loss_pct_per_direction,expected_rtt_ms,expected_loss_pct,loss_mean,loss_stdev,rtt_mean,rtt_stdev
+C1,ipv4,3,0,0.0,0.0,0.0,0.0,0.0,0.1,0.0
+C1,ipv6,3,0,0.0,0.0,0.0,0.0,0.0,0.09,0.01
+C2,ipv4,3,50,2.0,100.0,3.96,5.67,2.08,102.89,0.81
+C2,ipv6,3,50,2.0,100.0,3.96,4.67,2.52,102.09,0.2
+C3,ipv4,3,100,5.0,200.0,9.75,10.67,0.58,202.83,1.48
+C3,ipv6,3,100,5.0,200.0,9.75,11.33,1.15,202.85,1.28

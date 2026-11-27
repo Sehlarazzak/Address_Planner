@@ -7,6 +7,7 @@
     python -m planner.cli pingmatrix --plan  data/plan_example_mini.json [--dry-run] [--csv results.csv]
     python -m planner.cli evidence   --plan  data/plan_example_mini.json --out evidence/mini
     python -m planner.cli runlab     --input data/org_large.json            (the whole chain, one organization)
+    python -m planner.cli impair     --input data/org_small.json            (delay/loss experiments C1-C3)
 """
 import argparse
 import json
@@ -14,7 +15,7 @@ import sys
 import time
 from pathlib import Path
 
-from planner import configgen, evidence, labsetup, pingmatrix, runlab
+from planner import configgen, evidence, impair, labsetup, pingmatrix, runlab
 from planner.validate import (load_json, validate_input_semantics, validate_plan_semantics,
                               validate_structure)
 
@@ -90,6 +91,16 @@ def cmd_runlab(args):
         sys.exit(f"error: only {summary['pass_rate']}% of the pings passed")
 
 
+def cmd_impair(args):
+    name = args.name or Path(args.input).stem.replace("org_", "")
+    result = impair.run_impairments(args.input, name, runs=args.runs, count=args.count, interval=args.interval,
+                                    wait=args.wait, method=args.method, check_only=args.check, keep=args.keep)
+    if args.check:
+        print(f"OK: netem works using method '{result['method']}'")
+    else:
+        print(impair.markdown_table(result["summary"]))
+
+
 def cmd_pingmatrix(args):
     plan = _load_valid_plan(args.plan)
     lab = args.lab_name or configgen.default_lab_name(plan)
@@ -150,6 +161,18 @@ def main(argv=None):
     p.add_argument("--workers", type=int, default=8)
     p.add_argument("--keep", action="store_true", help="do not destroy the lab at the end")
     p.set_defaults(func=cmd_runlab)
+
+    p = sub.add_parser("impair", help="delay and loss experiments on a router link (conditions C1, C2, C3)")
+    p.add_argument("--input", required=True)
+    p.add_argument("--name")
+    p.add_argument("--runs", type=int, default=3, help="runs per condition (default 3)")
+    p.add_argument("--count", type=int, default=100, help="pings per run (default 100)")
+    p.add_argument("--interval", type=float, default=0.2, help="seconds between pings (default 0.2)")
+    p.add_argument("--wait", type=int, default=60)
+    p.add_argument("--method", choices=["auto", "tc", "clab"], default="auto")
+    p.add_argument("--check", action="store_true", help="only deploy, test that netem works here, and destroy")
+    p.add_argument("--keep", action="store_true")
+    p.set_defaults(func=cmd_impair)
 
     p = sub.add_parser("pingmatrix", help="run the all-pairs ping test on the deployed lab")
     p.add_argument("--plan", required=True)
