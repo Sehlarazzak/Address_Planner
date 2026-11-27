@@ -131,6 +131,37 @@ class TestRun(unittest.TestCase):
         for name in ("impairment_runs.csv", "impairment_summary.csv", "impairment_summary.md", "plan.json"):
             self.assertIn(name, files)
 
+    def test_first_run_of_every_condition_is_captured(self):
+        rec = Fake()
+        _, files = self.go(rec)
+        copies = [c for c in rec.calls if c[:2] == ["docker", "cp"]]
+        self.assertEqual(len(copies), 3 * 2)                       # 3 conditions x 2 families, run 1 only
+        for condition in ("C1", "C2", "C3"):
+            for family in ("ipv4", "ipv6"):
+                self.assertIn(f"{condition}_{family}_packets.txt", files)
+
+    def test_capture_starts_before_the_ping_and_uses_the_right_filter(self):
+        rec = Fake()
+        self.go(rec)
+        starts = [i for i, c in enumerate(rec.calls) if "-d" in c and "tcpdump" in " ".join(c)]
+        pings = [i for i, c in enumerate(rec.calls) if "ping" in c]
+        self.assertTrue(starts[0] < pings[0])
+        text = [" ".join(rec.calls[i]) for i in starts]
+        self.assertTrue(any(t.endswith("icmp") for t in text))
+        self.assertTrue(any(t.endswith("icmp6") for t in text))
+
+    def test_no_capture_option(self):
+        rec = Fake()
+        _, files = self.go(rec, capture=False)
+        self.assertEqual([c for c in rec.calls if c[:2] == ["docker", "cp"]], [])
+        self.assertNotIn("C2_ipv4_packets.txt", files)
+
+    def test_missing_tcpdump_skips_captures_but_the_experiment_still_runs(self):
+        rec = Fake(fail=lambda c: "--version" in c)
+        result, files = self.go(rec)
+        self.assertEqual(len(result["rows"]), 18)
+        self.assertEqual([c for c in rec.calls if c[:2] == ["docker", "cp"]], [])
+
     def test_ping_uses_the_requested_count_and_interval(self):
         rec = Fake()
         self.go(rec, count=50, interval=0.5)

@@ -94,7 +94,8 @@ def cmd_runlab(args):
 def cmd_impair(args):
     name = args.name or Path(args.input).stem.replace("org_", "")
     result = impair.run_impairments(args.input, name, runs=args.runs, count=args.count, interval=args.interval,
-                                    wait=args.wait, method=args.method, check_only=args.check, keep=args.keep)
+                                    wait=args.wait, method=args.method, check_only=args.check, keep=args.keep,
+                                    capture=not args.no_capture)
     if args.check:
         print(f"OK: netem works using method '{result['method']}'")
     else:
@@ -172,6 +173,7 @@ def main(argv=None):
     p.add_argument("--method", choices=["auto", "tc", "clab"], default="auto")
     p.add_argument("--check", action="store_true", help="only deploy, test that netem works here, and destroy")
     p.add_argument("--keep", action="store_true")
+    p.add_argument("--no-capture", action="store_true", help="skip the tcpdump packet captures")
     p.set_defaults(func=cmd_impair)
 
     p = sub.add_parser("pingmatrix", help="run the all-pairs ping test on the deployed lab")

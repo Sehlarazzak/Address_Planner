@@ -139,9 +139,13 @@ def _write_csv(rows, path, fields):
 
 
 def run_impairments(input_path, name, runs=3, count=100, interval=0.2, wait=60, method="auto",
-                    check_only=False, keep=False, evidence_root="evidence", build_root=".",
+                    check_only=False, keep=False, capture=True, capture_packets=40,
+                    evidence_root="evidence", build_root=".",
                     runner=subprocess.run, sleeper=time.sleep, log=print):
-    """Deploy the lab, run C1/C2/C3 x `runs` ping tests, save the results, destroy the lab."""
+    """Deploy the lab, run C1/C2/C3 x `runs` ping tests, save the results, destroy the lab.
+
+    With capture=True, run 1 of every condition also records the first `capture_packets` ICMP packets on the
+    source host (a .pcap for Wireshark plus a readable _packets.txt with timestamps)."""
     data = load_json(input_path)
     validate_structure(data, "input")
     validate_input_semantics(data)
@@ -175,6 +179,12 @@ def run_impairments(input_path, name, runs=3, count=100, interval=0.2, wait=60, 
         if check_only:
             return {"method": method}
 
+        src_container = f"clab-{lab}-{src['name']}"
+        can_capture = capture and runner(["docker", "exec", src_container, "tcpdump", "--version"],
+                                         capture_output=True, text=True).returncode == 0
+        if capture and not can_capture:
+            log(f"[{name}] tcpdump not found in {src['name']}; skipping packet captures")
+
         def set_condition(delay, loss):
             for router, iface, _ in ends:
                 container = f"clab-{lab}-{router}"
@@ -192,9 +202,25 @@ def run_impairments(input_path, name, runs=3, count=100, interval=0.2, wait=60, 
                 set_condition(delay, loss)
                 log(f"[{name}] {condition} (delay {delay} ms, loss {loss}% each way) run {run}/{runs}")
                 for family, flag, target in (("ipv4", "-4", dst["ipv4"]), ("ipv6", "-6", dst["ipv6"])):
-                    cmd = ["docker", "exec", f"clab-{lab}-{src['name']}", "ping", flag, "-c", str(count),
+                    cmd = ["docker", "exec", src_container, "ping", flag, "-c", str(count),
                            "-i", str(interval), "-W", "2", "-n", target]
+                    capturing = can_capture and run == 1
+                    pcap = f"/tmp/{condition}_{family}.pcap"
+                    if capturing:
+                        flt = "icmp" if family == "ipv4" else "icmp6"
+                        runner(["docker", "exec", "-d", src_container, "sh", "-c",
+                                f"tcpdump -nn -i eth1 -c {capture_packets} -w {pcap} {flt}"],
+                               capture_output=True, text=True)
+                        sleeper(1)                                  # let tcpdump start listening
                     done = runner(cmd, capture_output=True, text=True)
+                    if capturing:
+                        sleeper(1)
+                        runner(["docker", "cp", f"{src_container}:{pcap}", str(out_dir / f"{condition}_{family}.pcap")],
+                               capture_output=True, text=True)
+                        text = runner(["docker", "exec", src_container, "tcpdump", "-nn", "-tt", "-r", pcap],
+                                      capture_output=True, text=True)
+                        (out_dir / f"{condition}_{family}_packets.txt").write_text(
+                            getattr(text, "stdout", "") or "", encoding="utf-8")
                     stats = parse_ping_output(getattr(done, "stdout", "") or "")
                     rows.append({"condition": condition, "delay_ms": delay, "loss_pct": loss, "run": run,
                                  "family": family, "src": src["name"], "dst": dst["name"],

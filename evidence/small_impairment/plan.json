@@ -106,6 +106,6 @@
     }
   ],
   "metrics": {
-    "allocation_time_ms": 0.486
+    "allocation_time_ms": 0.225
   }
 }
