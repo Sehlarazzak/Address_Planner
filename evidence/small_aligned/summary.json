@@ -1,0 +1,16 @@
+{
+  "name": "small_aligned",
+  "organization": "Small (3 LANs, 2 routers)",
+  "lab": "small-3-lans-2-routers",
+  "routers": 2,
+  "hosts": 3,
+  "pings": 12,
+  "passed": 12,
+  "pass_rate": 100.0,
+  "attempts": 1,
+  "wait_seconds": 60,
+  "ping_seconds": 3.1,
+  "allocation_time_ms": 0.229,
+  "evidence_files": 10,
+  "evidence_failures": []
+}

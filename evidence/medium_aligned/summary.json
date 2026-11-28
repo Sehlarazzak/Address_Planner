@@ -1,0 +1,16 @@
+{
+  "name": "medium_aligned",
+  "organization": "Medium (6 LANs, 3 routers)",
+  "lab": "medium-6-lans-3-routers",
+  "routers": 3,
+  "hosts": 6,
+  "pings": 60,
+  "passed": 60,
+  "pass_rate": 100.0,
+  "attempts": 1,
+  "wait_seconds": 60,
+  "ping_seconds": 11.3,
+  "allocation_time_ms": 0.6,
+  "evidence_files": 18,
+  "evidence_failures": []
+}
