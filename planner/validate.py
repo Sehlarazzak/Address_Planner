@@ -1,17 +1,15 @@
 """Validation for planner input files and plan files.
 
 Two layers:
-  1. STRUCTURE  - does the JSON have the right shape?  (done for you: validate_structure)
-  2. SEMANTICS  - do the values make networking sense? (YOU write these two functions)
+1. STRUCTURE  - does the JSON have the right shape? (validate_structure)
+2. SEMANTICS  - do the values make networking sense? (validate_input_semantics, validate_plan_semantics)
 
 Both raise ValueError with a readable message on the first problem class they find.
 """
+import ipaddress
 import json
 import re
 from pathlib import Path
-
-# You will need these in the semantic checks:
-import ipaddress  # noqa: F401
 
 ROOT = Path(__file__).resolve().parent.parent
 SCHEMA_DIR = ROOT / "schemas"
@@ -85,28 +83,26 @@ def validate_structure(data, kind):
 
 
 # --------------------------------------------------------------------------
-# Layer 2: semantics  --  TODO (you write these)
+# Layer 2: semantics
 # --------------------------------------------------------------------------
 def validate_input_semantics(data):
     """Raise ValueError if the (structurally valid) input makes no networking sense.
 
     Rules to enforce:
-      1. ipv4_block is a valid IPv4 network written in strict form (10.0.0.5/24 is NOT valid).
-      2. ipv6_prefix is a valid IPv6 network, strict, with prefix length exactly 48.
-      3. Site names are unique; router names are unique; subnet names are unique within a site.
-      4. Every link's a and b name an existing site, and a != b.
-      5. No duplicate links (A-B and B-A count as the same link).
-      6. The sites form ONE connected graph through the links (no isolated site).
-      7. Baseline from the proposal: at least 2 routers and at least 3 subnets in total
+1. ipv4_block is a valid IPv4 network written in strict form (10.0.0.5/24 is NOT valid).
+2. ipv6_prefix is a valid IPv6 network, strict, with prefix length exactly 48.
+3. Site names are unique; router names are unique; subnet names are unique within a site.
+4. Every link's a and b name an existing site, and a != b.
+5. No duplicate links (A-B and B-A count as the same link).
+6. The sites form ONE connected graph through the links (no isolated site).
+7. Baseline from the proposal: at least 2 routers and at least 3 subnets in total
          (LANs + links).
     """
-    # Rule 1: strict=True rejects host bits (10.10.0.5/23); impossible octets (300) also fail.
     try:
         ipaddress.IPv4Network(data["ipv4_block"], strict=True)
     except ValueError as exc:
         raise ValueError(f"Invalid ipv4_block {data['ipv4_block']!r}: {exc}") from exc
 
-    # Rule 2: valid IPv6 network, and exactly a /48.
     try:
         v6 = ipaddress.IPv6Network(data["ipv6_prefix"], strict=True)
     except ValueError as exc:
@@ -114,7 +110,6 @@ def validate_input_semantics(data):
     if v6.prefixlen != 48:
         raise ValueError(f"ipv6_prefix must be a /48, got /{v6.prefixlen}")
 
-    # Rule 3: uniqueness. A set drops duplicates, so a shorter set means a duplicate existed.
     sites = data["sites"]
     site_names = [site["name"] for site in sites]
     if len(set(site_names)) != len(site_names):
@@ -122,12 +117,11 @@ def validate_input_semantics(data):
     router_names = [site["router"] for site in sites]
     if len(set(router_names)) != len(router_names):
         raise ValueError("Duplicate router names")
-    for site in sites:  # subnet names only need to be unique INSIDE one site
+    for site in sites:
         subnet_names = [lan["name"] for lan in site["subnets"]]
         if len(set(subnet_names)) != len(subnet_names):
             raise ValueError(f"Duplicate subnet name inside site {site['name']!r}")
 
-    # Rules 4 and 5: check each link, and build the neighbour map for rule 6 as we go.
     known_sites = set(site_names)
     neighbours = {name: set() for name in site_names}
     seen_links = set()
@@ -137,14 +131,13 @@ def validate_input_semantics(data):
             raise ValueError(f"Link {link['name']!r} refers to an unknown site")
         if a == b:
             raise ValueError(f"Link {link['name']!r} connects site {a!r} to itself")
-        pair = frozenset({a, b})  # A-B and B-A give the same frozenset
+        pair = frozenset({a, b})
         if pair in seen_links:
             raise ValueError(f"Duplicate link between {a!r} and {b!r}")
         seen_links.add(pair)
         neighbours[a].add(b)
         neighbours[b].add(a)
 
-    # Rule 6: walk the graph from the first site, visiting every neighbour not seen yet.
     visited = {site_names[0]}
     todo = [site_names[0]]
     while todo:
@@ -157,21 +150,13 @@ def validate_input_semantics(data):
         unreachable = sorted(known_sites - visited)
         raise ValueError(f"Sites are not all connected; cannot reach: {unreachable}")
 
-    # Rule 7: baseline from the proposal.
     total_subnets = sum(len(site["subnets"]) for site in sites) + len(data["links"])
     if len(sites) < 2 or total_subnets < 3:
         raise ValueError("Need at least 2 routers and 3 subnets in total")
 
 
 def validate_plan_semantics(data):
-    """Raise ValueError if a plan is internally inconsistent. This is your overlap detector.
-
-    The work is split so Sehla and Tania edit DIFFERENT functions (no Git conflicts):
-      _check_plan_links  - shared, already written
-      _check_plan_ipv6   - Sehla, written
-      _check_plan_ipv4   - Tania, TODO
-    The IPv6 check runs before the IPv4 one on purpose.
-    """
+    """Raise ValueError if a plan is internally inconsistent."""
     subnets = {}
     for sub in data["subnets"]:
         if sub["id"] in subnets:
@@ -183,8 +168,7 @@ def validate_plan_semantics(data):
 
 
 def _check_plan_links(data, subnets):
-    """Shared rule: every interface points at a real subnet; a LAN has exactly 1 router
-    interface (its gateway) and a link has exactly 2 (one per end)."""
+    """Every interface points at a real subnet; a LAN has 1 router interface and a link has 2."""
     ends = {sid: 0 for sid in subnets}
     for router in data["routers"]:
         for iface in router["interfaces"]:
@@ -202,9 +186,7 @@ def _check_plan_links(data, subnets):
 
 
 def _check_plan_ipv6(data, subnets):
-    """Sehla's half. Rules: every ipv6_cidr is a strict /64 inside ipv6_prefix; no two overlap;
-    a LAN lies inside its site's /52, a link inside ipv6_link_block; every interface IPv6
-    address lies inside its subnet; no IPv6 address is used twice."""
+    """Validate IPv6 /64 allocations, /52 site boundaries, link block, and interface addresses."""
     try:
         prefix = ipaddress.IPv6Network(data["ipv6_prefix"], strict=True)
         link_block = ipaddress.IPv6Network(data["ipv6_link_block"], strict=True)
@@ -213,7 +195,7 @@ def _check_plan_ipv6(data, subnets):
     except ValueError as exc:
         raise ValueError(f"Invalid IPv6 block in plan: {exc}") from exc
 
-    nets = {}  # subnet id -> IPv6Network, kept for the interface checks below
+    nets = {}
     for sub in data["subnets"]:
         try:
             net = ipaddress.IPv6Network(sub["ipv6_cidr"], strict=True)
@@ -253,6 +235,7 @@ def _check_plan_ipv6(data, subnets):
                 raise ValueError(f"Duplicate IPv6 address {addr} (already used elsewhere)")
             used.add(addr)
 
+
 def _check_plan_ipv4(data, subnets):
     """Validate IPv4 subnets, optional site/link blocks, overlaps, host capacity, and interfaces."""
     try:
@@ -288,60 +271,64 @@ def _check_plan_ipv4(data, subnets):
             raise ValueError(f"Invalid ipv4_link_block in plan: {exc}") from exc
         if not ipv4_link_block.subnet_of(block):
             raise ValueError(f"IPv4 link block {ipv4_link_block} is outside {block}")
+        for site_name, s_net in ipv4_sites.items():
+            if ipv4_link_block.overlaps(s_net):
+                raise ValueError(
+                    f"IPv4 link block {ipv4_link_block} overlaps site block {site_name!r} ({s_net})"
+                )
 
     nets = {}
     for sid, sub in subnets.items():
         try:
             net = ipaddress.IPv4Network(sub["ipv4_cidr"], strict=True)
         except ValueError as exc:
-            raise ValueError(f"Subnet {sid!r} has invalid ipv4_cidr {sub['ipv4_cidr']!r}: {exc}") from exc
+            raise ValueError(f"Subnet {sid!r} has invalid ipv4_cidr: {exc}") from exc
         if not net.subnet_of(block):
-            raise ValueError(f"Subnet {sid!r}: {net} is outside the block {block}")
+            raise ValueError(f"Subnet {sid!r}: {net} is outside {block}")
         if net.prefixlen != sub["ipv4_prefixlen"]:
             raise ValueError(
-                f"Subnet {sid!r}: ipv4_prefixlen {sub['ipv4_prefixlen']} does not match {net}"
+                f"Subnet {sid!r}: prefixlen /{net.prefixlen} does not match ipv4_prefixlen /{sub['ipv4_prefixlen']}"
             )
-        real_usable = net.num_addresses - 2
-        if sub["ipv4_usable"] != real_usable:
+        if (net.num_addresses - 2) < sub["hosts_required"]:
             raise ValueError(
-                f"Subnet {sid!r}: ipv4_usable is {sub['ipv4_usable']} but {net} has {real_usable}"
-            )
-        if sub["ipv4_usable"] < sub["hosts_required"]:
-            raise ValueError(
-                f"Subnet {sid!r}: {net} has {sub['ipv4_usable']} usable addresses, "
-                f"but {sub['hosts_required']} are required"
+                f"Subnet {sid!r}: usable hosts {net.num_addresses - 2} < hosts_required {sub['hosts_required']}"
             )
         if sub["type"] == "lan" and ipv4_sites:
-            s_block = ipv4_sites.get(sub["site"])
-            if s_block is None:
+            site_net = ipv4_sites.get(sub["site"])
+            if site_net is None:
                 raise ValueError(f"Subnet {sid!r}: site {sub['site']!r} missing from ipv4_sites")
-            if not net.subnet_of(s_block):
-                raise ValueError(f"Subnet {sid!r}: {net} is outside its site block {s_block}")
-        if sub["type"] == "link" and ipv4_link_block is not None:
+            if not net.subnet_of(site_net):
+                raise ValueError(f"Subnet {sid!r}: {net} is outside site block {site_net}")
+        elif sub["type"] == "link" and ipv4_link_block is not None:
             if not net.subnet_of(ipv4_link_block):
                 raise ValueError(f"Subnet {sid!r}: link {net} is outside ipv4_link_block {ipv4_link_block}")
-        nets[sid] = net
 
-    ordered = sorted(nets.items(), key=lambda kv: (int(kv[1].network_address), kv[1].prefixlen))
-    for (id_a, a), (id_b, b) in zip(ordered, ordered[1:]):
-        if a.overlaps(b):
-            raise ValueError(f"IPv4 overlap between {id_a!r} ({a}) and {id_b!r} ({b})")
+        for other_id, other in nets.items():
+            if net.overlaps(other):
+                raise ValueError(f"IPv4 overlap between {sub['id']!r} and {other_id!r}")
+        nets[sid] = net
 
     used = set()
     for router in data["routers"]:
         for iface in router["interfaces"]:
-            where = f"{router['name']}:{iface['name']}"
             try:
                 addr = ipaddress.IPv4Address(iface["ipv4"])
             except ValueError as exc:
-                raise ValueError(f"{where} has bad IPv4 address {iface['ipv4']!r}: {exc}") from exc
-            net = nets[iface["subnet_id"]]
-            if addr not in net:
-                raise ValueError(f"{where} address {addr} is outside its subnet {net}")
-            if addr == net.network_address:
-                raise ValueError(f"{where} address {addr} is the network address of {net}")
-            if addr == net.broadcast_address:
-                raise ValueError(f"{where} address {addr} is the broadcast address of {net}")
+                raise ValueError(f"Bad IPv4 address {iface['ipv4']!r}: {exc}") from exc
+            sub_net = nets[iface["subnet_id"]]
+            if addr not in sub_net:
+                raise ValueError(
+                    f"{router['name']}:{iface['name']} address {addr} is outside "
+                    f"{sub_net}"
+                )
+            if sub_net.prefixlen < 31 and addr == sub_net.network_address:
+                raise ValueError(
+                    f"{router['name']}:{iface['name']} address {addr} cannot be network address of {sub_net}"
+                )
+            if sub_net.prefixlen < 31 and addr == sub_net.broadcast_address:
+                raise ValueError(
+                    f"{router['name']}:{iface['name']} address {addr} cannot be broadcast address of {sub_net}"
+                )
             if addr in used:
                 raise ValueError(f"Duplicate IPv4 address {addr} (already used elsewhere)")
             used.add(addr)
