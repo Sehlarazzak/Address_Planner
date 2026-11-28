@@ -8,6 +8,7 @@
     python -m planner.cli evidence   --plan  data/plan_example_mini.json --out evidence/mini
     python -m planner.cli runlab     --input data/org_large.json            (the whole chain, one organization)
     python -m planner.cli impair     --input data/org_small.json            (delay/loss experiments C1-C3)
+    python -m planner.cli report     [--out comparison_report.csv] [--runs 20]
 """
 import argparse
 import json
@@ -15,7 +16,7 @@ import sys
 import time
 from pathlib import Path
 
-from planner import configgen, evidence, impair, labsetup, pingmatrix, runlab
+from planner import compare, configgen, evidence, impair, labsetup, pingmatrix, runlab
 from planner.validate import (load_json, validate_input_semantics, validate_plan_semantics,
                               validate_structure)
 
@@ -123,6 +124,11 @@ def cmd_pingmatrix(args):
         print(f"Wrote {args.csv}")
 
 
+def cmd_report(args):
+    out = compare.write_report_csv(args.out, runs=args.runs)
+    print(f"Wrote {out}")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="planner", description="IPv4/IPv6 address planner")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -183,6 +189,11 @@ def main(argv=None):
     p.add_argument("--workers", type=int, default=8, help="how many pings to run at the same time (default 8)")
     p.add_argument("--dry-run", action="store_true", help="print the commands without running them")
     p.set_defaults(func=cmd_pingmatrix)
+
+    p = sub.add_parser("report", help="export comparison, summarization, and timing metrics to CSV")
+    p.add_argument("--out", default="comparison_report.csv")
+    p.add_argument("--runs", type=int, default=20)
+    p.set_defaults(func=cmd_report)
 
     args = parser.parse_args(argv)
     try:

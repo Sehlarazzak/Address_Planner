@@ -1,38 +1,28 @@
 import ipaddress
+import math
 import time
 
 from planner.ipv6_alloc import allocate_64s, carve_site_blocks, interface_address
 from planner.vlsm import required_hosts, required_prefix
 
 
-def _extract_link_endpoints(link, site_names):
-    """Extract (site_a, site_b, link_name) as non-empty strings from a link object."""
-    fallback_a = site_names[0]
-    fallback_b = site_names[1] if len(site_names) > 1 else site_names[0]
+def _next_power_of_two(n):
+    """Return smallest power of two >= max(1, n)."""
+    if n <= 1:
+        return 1
+    return 1 << (n - 1).bit_length()
 
-    if isinstance(link, dict):
-        endpoints = link.get("endpoints") or link.get("sites") or link.get("nodes")
-        a_site = link.get("site_a") or link.get("from") or link.get("source") or link.get("a")
-        b_site = link.get("site_b") or link.get("to") or link.get("target") or link.get("b")
 
-        if (not a_site or not b_site) and isinstance(endpoints, (list, tuple)) and len(endpoints) >= 2:
-            a_site = a_site or endpoints[0]
-            b_site = b_site or endpoints[1]
+def _prefixlen_for_block_size(size):
+    """Convert a power-of-two IPv4 block size into a /prefixlen."""
+    if size < 1 or (size & (size - 1)) != 0:
+        raise ValueError(f"Block size must be a power of two, got {size}")
+    return 32 - (size.bit_length() - 1)
 
-        if not a_site or not b_site:
-            for val in link.values():
-                if isinstance(val, str) and val in site_names:
-                    if not a_site:
-                        a_site = val
-                    elif not b_site and val != a_site:
-                        b_site = val
 
-        a_site = str(a_site) if a_site else fallback_a
-        b_site = str(b_site) if b_site else fallback_b
-        link_name = str(link.get("name") or link.get("id") or f"{a_site}-{b_site}")
-        return a_site, b_site, link_name
-
-    return fallback_a, fallback_b, f"{fallback_a}-{fallback_b}"
+def _extract_link_endpoints(link):
+    """Extract (site_a, site_b, link_name) directly from a schema-valid link object."""
+    return str(link["a"]), str(link["b"]), str(link["name"])
 
 
 def _carve_ipv4_subnets(block, items_with_prefix):
@@ -65,6 +55,7 @@ def allocate(data):
     ipv4_block = ipaddress.IPv4Network(data["ipv4_block"], strict=True)
     sites = data.get("sites", [])
     site_names = [str(s["name"]) for s in sites]
+    site_router_map = {str(s["name"]): str(s["router"]) for s in sites}
     site_blocks, link_block = carve_site_blocks(data["ipv6_prefix"], site_names)
 
     site_64_pools = {}
@@ -76,9 +67,8 @@ def allocate(data):
     links = data.get("links", [])
     link_64_pool = iter(allocate_64s(link_block, len(links)))
 
-    subnet_specs = []
+    lan_specs_by_site = {s_name: [] for s_name in site_names}
     subnet_ipv6_map = {}
-    link_subnet_ids = []
 
     # 1. LAN subnets per site
     for site_obj in sites:
@@ -91,7 +81,7 @@ def allocate(data):
             sub_id = f"{s_name}:{lan['name']}"
             ipv6_net = next(site_64_pools[s_name])
             subnet_ipv6_map[sub_id] = ipv6_net
-            subnet_specs.append({
+            lan_specs_by_site[s_name].append({
                 "id": sub_id,
                 "site": s_name,
                 "name": str(lan["name"]),
@@ -103,14 +93,52 @@ def allocate(data):
                 "ipv6_cidr": str(ipv6_net),
             })
 
-    # 2. Point-to-point links (/30 IPv4, 2 hosts required)
+    # Compute per-site IPv4 block sizes (sum of LAN block sizes rounded up to power of two)
+    site_v4_sizes = {}
+    for s_name in site_names:
+        lan_sum = sum(1 << (32 - spec["ipv4_prefixlen"]) for spec in lan_specs_by_site[s_name])
+        site_v4_sizes[s_name] = _next_power_of_two(lan_sum)
+
+    # Point-to-point links block size: len(links) * 4 rounded up to power of two
+    link_v4_size = _next_power_of_two(len(links) * 4) if links else 0
+
+    # Top-level container blocks carved from ipv4_block, largest first
+    container_items = [
+        (f"site:{s_name}", _prefixlen_for_block_size(site_v4_sizes[s_name]))
+        for s_name in site_names
+    ]
+    if link_v4_size > 0:
+        container_items.append(("links", _prefixlen_for_block_size(link_v4_size)))
+
+    carved_containers = _carve_ipv4_subnets(ipv4_block, container_items)
+    ipv4_site_nets = {}
+    for s_name, net in zip(site_names, carved_containers[: len(site_names)]):
+        ipv4_site_nets[s_name] = net
+
+    ipv4_link_net = carved_containers[len(site_names)] if link_v4_size > 0 else None
+
+    # Carve each site's LANs inside its own site block (largest first inside _carve_ipv4_subnets)
+    subnet_v4_map = {}
+    for s_name in site_names:
+        specs = lan_specs_by_site[s_name]
+        if specs:
+            carved_lans = _carve_ipv4_subnets(
+                ipv4_site_nets[s_name],
+                [(spec["id"], spec["ipv4_prefixlen"]) for spec in specs],
+            )
+            for spec, v4_net in zip(specs, carved_lans):
+                subnet_v4_map[spec["id"]] = v4_net
+
+    # Carve point-to-point links inside ipv4_link_block
+    link_specs = []
+    link_subnet_ids = []
     for idx, link in enumerate(links, start=1):
-        a_site, b_site, link_name = _extract_link_endpoints(link, site_names)
+        a_site, b_site, link_name = _extract_link_endpoints(link)
         sub_id = f"link:{idx}:{link_name}"
         ipv6_net = next(link_64_pool)
         subnet_ipv6_map[sub_id] = ipv6_net
         link_subnet_ids.append((sub_id, a_site, b_site))
-        subnet_specs.append({
+        link_specs.append({
             "id": sub_id,
             "site": a_site,
             "name": link_name,
@@ -122,17 +150,21 @@ def allocate(data):
             "ipv6_cidr": str(ipv6_net),
         })
 
-    carved_v4 = _carve_ipv4_subnets(
-        ipv4_block, [(spec["id"], spec["ipv4_prefixlen"]) for spec in subnet_specs]
-    )
+    if link_specs and ipv4_link_net is not None:
+        carved_links = _carve_ipv4_subnets(
+            ipv4_link_net,
+            [(spec["id"], spec["ipv4_prefixlen"]) for spec in link_specs],
+        )
+        for spec, v4_net in zip(link_specs, carved_links):
+            subnet_v4_map[spec["id"]] = v4_net
 
+    all_specs = [spec for s_name in site_names for spec in lan_specs_by_site[s_name]] + link_specs
     subnets_out = []
-    subnet_v4_map = {}
     subnet_next_host_idx = {}
 
-    for spec, v4_net in zip(subnet_specs, carved_v4):
+    for spec in all_specs:
+        v4_net = subnet_v4_map[spec["id"]]
         usable = v4_net.num_addresses - 2
-        subnet_v4_map[spec["id"]] = v4_net
         subnet_next_host_idx[spec["id"]] = 1
         subnets_out.append({
             "id": spec["id"],
@@ -148,62 +180,19 @@ def allocate(data):
             "ipv6_cidr": spec["ipv6_cidr"],
         })
 
-    # 3. Build routers (at least 2 routers, each with at least 1 interface)
-    raw_routers = data.get("routers")
-    if not raw_routers:
-        router_specs = []
-        for idx, s_name in enumerate(site_names, start=1):
-            site_lans = [s["id"] for s in subnets_out if s["type"] == "lan" and s["site"] == s_name]
-            related_links = [
-                sid for sid, a_s, b_s in link_subnet_ids if a_s == s_name or b_s == s_name
-            ]
-            iface_targets = site_lans + related_links
-            if not iface_targets and subnets_out:
-                iface_targets = [subnets_out[0]["id"]]
-            router_specs.append({
-                "name": f"r-{s_name}",
-                "site": s_name,
-                "subnet_ids": iface_targets,
-            })
-
-        # Ensure at least 2 routers exist to satisfy schema minItems: 2
-        while len(router_specs) < 2:
-            target_sub = subnets_out[len(router_specs) % len(subnets_out)]["id"]
-            target_site = site_names[len(router_specs) % len(site_names)]
-            router_specs.append({
-                "name": f"r-{target_site}-{len(router_specs) + 1}",
-                "site": target_site,
-                "subnet_ids": [target_sub],
-            })
-    else:
-        router_specs = []
-        for idx, r in enumerate(raw_routers, start=1):
-            r_site = str(r.get("site") or site_names[0])
-            r_name = str(r.get("name") or f"r{idx}")
-            ifaces = r.get("interfaces") or []
-            sub_ids = []
-            for iface in ifaces:
-                if isinstance(iface, dict) and iface.get("subnet_id") in subnet_v4_map:
-                    sub_ids.append(iface["subnet_id"])
-            if not sub_ids:
-                site_lans = [s["id"] for s in subnets_out if s["type"] == "lan" and s["site"] == r_site]
-                sub_ids = site_lans[:1] or [subnets_out[0]["id"]]
-            router_specs.append({"name": r_name, "site": r_site, "subnet_ids": sub_ids})
-
-        while len(router_specs) < 2:
-            extra_idx = len(router_specs) + 1
-            extra_site = site_names[(extra_idx - 1) % len(site_names)]
-            extra_sub = subnets_out[(extra_idx - 1) % len(subnets_out)]["id"]
-            router_specs.append({
-                "name": f"r{extra_idx}",
-                "site": extra_site,
-                "subnet_ids": [extra_sub],
-            })
-
+    # 3. Build routers using router names from input
     routers_out = []
-    for r_spec in router_specs:
+    for s_name in site_names:
+        site_lans = [s["id"] for s in subnets_out if s["type"] == "lan" and s["site"] == s_name]
+        related_links = [
+            sid for sid, a_s, b_s in link_subnet_ids if a_s == s_name or b_s == s_name
+        ]
+        iface_targets = site_lans + related_links
+        if not iface_targets:
+            raise ValueError(f"Site {s_name!r} has no LANs or links to assign router interfaces")
+
         ifaces_out = []
-        for iface_num, sub_id in enumerate(r_spec["subnet_ids"], start=1):
+        for iface_num, sub_id in enumerate(iface_targets, start=1):
             host_idx = subnet_next_host_idx[sub_id]
             subnet_next_host_idx[sub_id] = host_idx + 1
 
@@ -220,20 +209,24 @@ def allocate(data):
             })
 
         routers_out.append({
-            "name": r_spec["name"],
-            "site": r_spec["site"],
+            "name": site_router_map[s_name],
+            "site": s_name,
             "interfaces": ifaces_out,
         })
 
     elapsed_ms = (time.perf_counter() - t0) * 1000.0
 
-    return {
+    result = {
         "organization": data["organization"],
         "ipv4_block": str(ipv4_block),
         "ipv6_prefix": str(ipaddress.IPv6Network(data["ipv6_prefix"], strict=True)),
         "ipv6_sites": {name: str(net) for name, net in site_blocks.items()},
         "ipv6_link_block": str(link_block),
+        "ipv4_sites": {name: str(net) for name, net in ipv4_site_nets.items()},
         "subnets": subnets_out,
         "routers": routers_out,
         "metrics": {"allocation_time_ms": round(elapsed_ms, 3)},
     }
+    if ipv4_link_net is not None:
+        result["ipv4_link_block"] = str(ipv4_link_net)
+    return result

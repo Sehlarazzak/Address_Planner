@@ -53,7 +53,7 @@ class TestRunLab(unittest.TestCase):
         _, _, files, _ = run(Recorder())
         for name in ("plan.json", "results.csv", "summary.json"):
             self.assertIn(name, files)
-        self.assertIn("r-A_ip_route.txt", files)
+        self.assertIn("R1_ip_route.txt", files)
 
     def test_failed_pings_are_retried_once_then_reported(self):
         rec = Recorder(fail=lambda c: "ping" in c and "-6" in c)
