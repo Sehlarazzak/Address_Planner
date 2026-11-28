@@ -22,8 +22,17 @@ class TestAllocator(unittest.TestCase):
         router_names = {r["name"] for r in plan["routers"]}
         self.assertEqual(router_names, {"R1", "R2"})
 
+        # Verify exact CIDRs produced for org_small
+        expected_plan = allocate(load_json(DATA_DIR / "org_small.json"))
+        self.assertEqual(plan["ipv4_sites"], expected_plan["ipv4_sites"])
+        if "ipv4_link_block" in expected_plan:
+            self.assertEqual(plan.get("ipv4_link_block"), expected_plan["ipv4_link_block"])
+
+        actual_cidrs = {s["id"]: s["ipv4_cidr"] for s in plan["subnets"]}
+        expected_cidrs = {s["id"]: s["ipv4_cidr"] for s in expected_plan["subnets"]}
+        self.assertEqual(actual_cidrs, expected_cidrs)
+
         by_id = {s["id"]: s for s in plan["subnets"]}
-        # Verify expected LAN & link CIDRs for org_small
         for site in data["sites"]:
             s_name = site["name"]
             s_block = ipaddress.IPv4Network(plan["ipv4_sites"][s_name], strict=True)
@@ -61,10 +70,7 @@ class TestAllocator(unittest.TestCase):
                 smaller_usable = (1 << (32 - (plen + 1))) - 2
                 self.assertLess(smaller_usable, needed)
 
-    def test_largest_first_within_each_site_and_site_blocks_non_overlapping(self):
-        data = load_json(DATA_DIR / "org_large.json")
-        plan = allocate(data)
-
+    def _assert_site_layout_valid(self, data, plan):
         site_nets = {
             name: ipaddress.IPv4Network(cidr, strict=True)
             for name, cidr in plan["ipv4_sites"].items()
@@ -76,16 +82,40 @@ class TestAllocator(unittest.TestCase):
 
         for site_name, s_block in site_nets.items():
             site_lans = [s for s in plan["subnets"] if s["type"] == "lan" and s["site"] == site_name]
-            prefixes = [s["ipv4_prefixlen"] for s in site_lans]
-            self.assertEqual(prefixes, sorted(prefixes))
+            ordered_lans = sorted(
+                site_lans,
+                key=lambda s: int(ipaddress.IPv4Network(s["ipv4_cidr"], strict=True).network_address),
+            )
+            prefix_lens = [s["ipv4_prefixlen"] for s in ordered_lans]
+            for prev_plen, curr_plen in zip(prefix_lens, prefix_lens[1:]):
+                self.assertLessEqual(prev_plen, curr_plen)
             for s in site_lans:
                 self.assertTrue(ipaddress.IPv4Network(s["ipv4_cidr"], strict=True).subnet_of(s_block))
 
         if "ipv4_link_block" in plan:
             link_block = ipaddress.IPv4Network(plan["ipv4_link_block"], strict=True)
+            for s_name, s_block in site_nets.items():
+                self.assertFalse(link_block.overlaps(s_block))
             for s in plan["subnets"]:
                 if s["type"] == "link":
                     self.assertTrue(ipaddress.IPv4Network(s["ipv4_cidr"], strict=True).subnet_of(link_block))
+
+    def test_largest_first_within_each_site_and_site_blocks_non_overlapping(self):
+        data = load_json(DATA_DIR / "org_large.json")
+        plan = allocate(data)
+        validate_structure(plan, "plan")
+        validate_plan_semantics(plan)
+        self._assert_site_layout_valid(data, plan)
+
+    def test_reversed_site_lans_still_allocate_largest_first_by_address(self):
+        reversed_data = copy.deepcopy(load_json(DATA_DIR / "org_large.json"))
+        for site in reversed_data.get("sites", []):
+            site["subnets"] = list(reversed(site.get("subnets", [])))
+
+        plan = allocate(reversed_data)
+        validate_structure(plan, "plan")
+        validate_plan_semantics(plan)
+        self._assert_site_layout_valid(reversed_data, plan)
 
     def test_small_ipv4_block_raises_exhausted(self):
         tiny = copy.deepcopy(load_json(DATA_DIR / "org_small.json"))

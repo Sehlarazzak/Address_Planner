@@ -81,13 +81,18 @@ def compare_organization(data):
     flat_prefixes = [p for _, _, _, _, p in items]
     flat_metrics = _evaluate_prefixes(ipv4_block, items, flat_prefixes)
 
-    # Site-aligned VLSM: actual output of allocate(data)
+    # Site-aligned VLSM: reserved site/link blocks from allocate(data)
     aligned_needed = sum(h for _, _, _, h, _ in items)
     aligned_allocated = 0
     aligned_fits = True
     try:
         plan = allocate(data)
-        aligned_allocated = sum(1 << (32 - s["ipv4_prefixlen"]) for s in plan["subnets"])
+        aligned_allocated = sum(
+            ipaddress.IPv4Network(cidr, strict=True).num_addresses
+            for cidr in plan.get("ipv4_sites", {}).values()
+        )
+        if plan.get("ipv4_link_block"):
+            aligned_allocated += ipaddress.IPv4Network(plan["ipv4_link_block"], strict=True).num_addresses
     except ValueError:
         aligned_fits = False
 

@@ -1,5 +1,4 @@
 import ipaddress
-import math
 import time
 
 from planner.ipv6_alloc import allocate_64s, carve_site_blocks, interface_address

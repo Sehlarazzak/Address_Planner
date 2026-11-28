@@ -1,7 +1,7 @@
 """Command-line entry point.
 
     python -m planner.cli validate   --input data/org_small.json
-    python -m planner.cli allocate   --input data/org_small.json --out plan.json   (needs the allocator)
+    python -m planner.cli allocate   --input data/org_small.json --out plan.json
     python -m planner.cli render     --plan  data/plan_example_mini.json --out build
     python -m planner.cli configure  --plan  data/plan_example_mini.json        (after containerlab deploy)
     python -m planner.cli pingmatrix --plan  data/plan_example_mini.json [--dry-run] [--csv results.csv]
@@ -17,6 +17,7 @@ import time
 from pathlib import Path
 
 from planner import compare, configgen, evidence, impair, labsetup, pingmatrix, runlab
+from planner.allocator import allocate
 from planner.validate import (load_json, validate_input_semantics, validate_plan_semantics,
                               validate_structure)
 
@@ -39,10 +40,6 @@ def cmd_allocate(args):
     data = load_json(args.input)
     validate_structure(data, "input")
     validate_input_semantics(data)
-    try:
-        from planner.allocator import allocate          # Tania's module; does not exist yet
-    except ImportError:
-        sys.exit("error: the allocator (planner/allocator.py) is not implemented yet")
     plan = allocate(data)
     validate_structure(plan, "plan")
     validate_plan_semantics(plan)
